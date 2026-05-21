@@ -1,7 +1,7 @@
 import { Activity } from 'lucide-react'
 import { useMemo } from 'react'
 import { cn } from '../utils/cn'
-import { buildLatencyQualityRows, filterRowsByLatestSeries, normalizeTs, qualitySegmentColor } from '../utils/latency'
+import { buildLatencyQualityRows, filterRowsByLatestSeries, qualitySegmentColor } from '../utils/latency'
 import type { Node, TaskQueryResult } from '../types'
 
 const SEGMENTS = 22
@@ -79,14 +79,11 @@ function TcpingRow({ item }: { item: SeriesSummary }) {
 function summarizeTcping(rows: TaskQueryResult[]): SeriesSummary[] {
   const filteredRows = filterRowsByLatestSeries(rows, 'tcp_ping')
 
-  if (filteredRows.length === 0) return []
-
   return buildLatencyQualityRows(filteredRows, 'tcp_ping', SEGMENTS, {
     windowMs: MINI_WINDOW_MS,
     bucketMs: MINI_BUCKET_MS,
     buckets: SEGMENTS,
     includeCurrentBucket: false,
-    now: miniWindowNow(filteredRows),
   })
     .map(row => ({
       name: row.name,
@@ -97,20 +94,6 @@ function summarizeTcping(rows: TaskQueryResult[]): SeriesSummary[] {
       lossRate: row.lossRate,
     }))
     .sort((a, b) => providerRank(a.name) - providerRank(b.name) || (a.avg ?? Infinity) - (b.avg ?? Infinity))
-}
-
-
-function miniWindowNow(rows: TaskQueryResult[]) {
-  const now = Date.now()
-  const currentWindowStart = now - MINI_WINDOW_MS
-  const hasCurrentRows = rows.some(row => {
-    const ts = normalizeTs(row.timestamp)
-    return ts >= currentWindowStart && ts <= now
-  })
-  if (hasCurrentRows) return now
-
-  const latest = rows.reduce((max, row) => Math.max(max, normalizeTs(row.timestamp)), 0)
-  return latest > 0 ? latest + MINI_BUCKET_MS : now
 }
 
 function displayProvider(name: string) {

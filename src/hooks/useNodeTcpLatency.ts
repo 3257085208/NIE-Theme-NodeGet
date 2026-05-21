@@ -3,11 +3,11 @@ import { fetchLatencyRows, getLatencyCache, setLatencyCache } from './useNodeLat
 import type { BackendPool } from '../api/pool'
 import type { TaskQueryResult } from '../types'
 
-const DEFAULT_REFRESH_MS = 180_000
+const DEFAULT_REFRESH_MS = 60_000
 const ERROR_RETRY_MS = 30_000
 const QUERY_TIMEOUT_MS = 12_000
 const AVAILABILITY_WINDOW_MS = 4 * 60 * 60 * 1000
-const MAX_CONCURRENT = 2
+const MAX_CONCURRENT = 3
 
 type Priority = 'high' | 'normal'
 
@@ -16,6 +16,9 @@ interface UseNodeTcpLatencyOptions {
   refreshMs?: number
   priority?: Priority
   windowMs?: number
+}
+
+interface InternalFetchOptions extends UseNodeTcpLatencyOptions {
   force?: boolean
 }
 
@@ -34,6 +37,7 @@ interface QueueItem {
   uuid: string
   windowMs: number
   priority: Priority
+  force?: boolean
 }
 
 const stateStore = new Map<string, TcpLatencyState>()
@@ -95,13 +99,12 @@ function subscribe(key: string, fn: () => void) {
 }
 
 function pickQueuedItem() {
-  const items = [...queued.values()]
-    .sort((a, b) => {
-      if (a.priority !== b.priority) return a.priority === 'high' ? -1 : 1
-      const aState = stateStore.get(queryKey(a.source, a.uuid))
-      const bState = stateStore.get(queryKey(b.source, b.uuid))
-      return (aState?.updatedAt ?? 0) - (bState?.updatedAt ?? 0)
-    })
+  const items = [...queued.values()].sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority === 'high' ? -1 : 1
+    const aState = stateStore.get(queryKey(a.source, a.uuid))
+    const bState = stateStore.get(queryKey(b.source, b.uuid))
+    return (aState?.updatedAt ?? 0) - (bState?.updatedAt ?? 0)
+  })
   return items[0] || null
 }
 
@@ -123,7 +126,7 @@ function drainQueue() {
 
       const previous = getSnapshot(next.source, next.uuid, next.windowMs)
       updateState(key, {
-        loading: previous.tcpData.length === 0,
+        loading: Boolean(next.force) || previous.tcpData.length === 0,
         error: null,
       })
 
@@ -167,18 +170,18 @@ function scheduleFetch(
     priority = 'normal',
     windowMs = AVAILABILITY_WINDOW_MS,
     force = false,
-  }: UseNodeTcpLatencyOptions = {},
+  }: InternalFetchOptions = {},
 ) {
   if (!enabled || !pool || !source || !uuid) return
   const key = queryKey(source, uuid)
   const state = getSnapshot(source, uuid, windowMs)
   const cooldownMs = state.error ? Math.min(refreshMs, ERROR_RETRY_MS) : refreshMs
-  const isStale = !state.updatedAt || Date.now() - state.updatedAt >= cooldownMs
-  if ((!force && !isStale) || inflight.has(key)) return
+  const isStale = force || !state.updatedAt || Date.now() - state.updatedAt >= cooldownMs
+  if (!isStale || inflight.has(key)) return
 
   const existing = queued.get(key)
-  if (!existing || (existing.priority !== 'high' && priority === 'high')) {
-    queued.set(key, { pool, source, uuid, windowMs, priority })
+  if (!existing || force || (existing.priority !== 'high' && priority === 'high')) {
+    queued.set(key, { pool, source, uuid, windowMs, priority, force })
   }
   drainQueue()
 }
@@ -212,13 +215,15 @@ export function useNodeTcpLatency(
     const triggerFetch = (nextPriority: Priority = priority, force = false) => {
       scheduleFetch(pool, source, uuid, { enabled: true, refreshMs, priority: nextPriority, windowMs, force })
     }
+
     const onWake = () => {
       if (document.visibilityState === 'visible') triggerFetch('high', true)
     }
 
     const timer = window.setInterval(() => {
-      triggerFetch(priority)
+      if (document.visibilityState === 'visible') triggerFetch(priority)
     }, Math.max(15_000, refreshMs))
+
     document.addEventListener('visibilitychange', onWake)
     window.addEventListener('focus', onWake)
     window.addEventListener('online', onWake)

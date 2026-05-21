@@ -26,7 +26,7 @@ export function NodeCard({ node, pool }: { node: Node; pool: BackendPool | null 
   const { ref, visible } = useInViewport<HTMLAnchorElement>({ rootMargin: '320px 0px' })
   const { tcpData, loading: tcpLoading, error: tcpError } = useNodeTcpLatency(pool, node.source, node.uuid, {
     enabled: visible && node.online,
-    refreshMs: 180_000,
+    refreshMs: 60_000,
     priority: visible ? 'high' : 'normal',
   })
   return (
