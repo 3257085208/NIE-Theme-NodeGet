@@ -130,18 +130,7 @@
     background-color 0.18s ease-out,
     border-color 0.18s ease-out,
     color 0.18s ease-out,
-    transform 0.16s ease,
     box-shadow 0.16s ease;
-}
-
-.card-soft::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 2px;
-  pointer-events: none;
-  background: linear-gradient(90deg, hsl(var(--primary) / 0.42), transparent 72%);
-  opacity: 0.58;
 }
 
 .dark .card-soft {
@@ -151,10 +140,6 @@
     0 12px 30px rgba(0, 0, 0, 0.30),
     0 2px 8px rgba(0, 0, 0, 0.18),
     0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-}
-
-.dark .card-soft::before {
-  opacity: 0.42;
 }
 
 .node-card-hover:hover {
@@ -205,9 +190,6 @@
     transform: scale(0.985);
   }
 
-  .card-soft:hover {
-    transform: translateY(-1px);
-  }
 }
 
 @keyframes globe-node-pulse {
