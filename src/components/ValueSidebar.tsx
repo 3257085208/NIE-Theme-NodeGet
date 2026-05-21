@@ -4,7 +4,7 @@ import { Card } from './ui/card'
 import { Badge } from './ui/badge'
 import { Progress } from './ui/progress'
 import { displayName } from '../utils/derive'
-import { cycleProgress, hasCost, remainingDays, remainingValue } from '../utils/cost'
+import { cycleProgress, formatCny, hasCost, monthlyCostCny, remainingDays, remainingValueCny } from '../utils/cost'
 import type { Node } from '../types'
 
 interface Props {
@@ -21,8 +21,8 @@ export function ValueSidebar({ nodes }: Props) {
     .sort((a, b) => a.days - b.days)
 
   const within30 = expiringSoon.filter(item => item.days <= 30).length
-  const monthlyCny = billable.reduce((sum, node) => sum + monthlyCost(node.meta.price, node.meta.priceCycle), 0)
-  const remainingCny = billable.reduce((sum, node) => sum + remainingValue(node.meta), 0)
+  const monthlyCny = billable.reduce((sum, node) => sum + monthlyCostCny(node.meta), 0)
+  const remainingCny = billable.reduce((sum, node) => sum + remainingValueCny(node.meta), 0)
 
   return (
     <>
@@ -79,7 +79,7 @@ export function ValueSidebar({ nodes }: Props) {
                   <Progress value={cycleProgress(node.meta)} className="h-1.5 rounded-sm" />
                   <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                     <span>{node.meta.expireTime || '未设置'}</span>
-                    {node.meta.price > 0 ? <span>{formatCny(remainingValue(node.meta))}</span> : <span>—</span>}
+                    {node.meta.price > 0 ? <span>{formatCny(remainingValueCny(node.meta))}</span> : <span>—</span>}
                   </div>
                 </div>
               </div>
@@ -124,12 +124,3 @@ function StatCard({ icon: Icon, label, value, sub }: { icon: ComponentType<{ cla
   )
 }
 
-function monthlyCost(price: number, cycle: number) {
-  if (!price) return 0
-  const safeCycle = cycle > 0 ? cycle : 30
-  return price * (30 / safeCycle)
-}
-
-function formatCny(value: number) {
-  return `¥${(Number.isFinite(value) ? value : 0).toFixed(2)}`
-}

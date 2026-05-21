@@ -16,6 +16,7 @@ interface UseNodeTcpLatencyOptions {
   refreshMs?: number
   priority?: Priority
   windowMs?: number
+  force?: boolean
 }
 
 interface TcpLatencyState {
@@ -165,6 +166,7 @@ function scheduleFetch(
     refreshMs = DEFAULT_REFRESH_MS,
     priority = 'normal',
     windowMs = AVAILABILITY_WINDOW_MS,
+    force = false,
   }: UseNodeTcpLatencyOptions = {},
 ) {
   if (!enabled || !pool || !source || !uuid) return
@@ -172,7 +174,7 @@ function scheduleFetch(
   const state = getSnapshot(source, uuid, windowMs)
   const cooldownMs = state.error ? Math.min(refreshMs, ERROR_RETRY_MS) : refreshMs
   const isStale = !state.updatedAt || Date.now() - state.updatedAt >= cooldownMs
-  if (!isStale || inflight.has(key)) return
+  if ((!force && !isStale) || inflight.has(key)) return
 
   const existing = queued.get(key)
   if (!existing || (existing.priority !== 'high' && priority === 'high')) {
@@ -207,11 +209,11 @@ export function useNodeTcpLatency(
     scheduleFetch(pool, source, uuid, { enabled, refreshMs, priority, windowMs })
     if (!enabled || !pool || !source || !uuid) return unsubscribe
 
-    const triggerFetch = (nextPriority: Priority = priority) => {
-      scheduleFetch(pool, source, uuid, { enabled: true, refreshMs, priority: nextPriority, windowMs })
+    const triggerFetch = (nextPriority: Priority = priority, force = false) => {
+      scheduleFetch(pool, source, uuid, { enabled: true, refreshMs, priority: nextPriority, windowMs, force })
     }
     const onWake = () => {
-      if (document.visibilityState === 'visible') triggerFetch('high')
+      if (document.visibilityState === 'visible') triggerFetch('high', true)
     }
 
     const timer = window.setInterval(() => {

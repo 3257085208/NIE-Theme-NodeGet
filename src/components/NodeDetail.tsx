@@ -23,7 +23,6 @@ import { cn } from '../utils/cn'
 import {
   buildLatencyChart,
   buildLatencyQualityRows,
-  filterRowsByLatestSeries,
   qualitySegmentColor,
   type LatencyQualityRow,
 } from '../utils/latency'
@@ -349,11 +348,10 @@ const ms = (v: number) => `${v.toFixed(1)} ms`
 
 function LatencyBlock({ title, rows, type, loading, error }: LatencyBlockProps) {
   const isMobile = useIsMobile()
-  const filteredRows = useMemo(() => filterRowsByLatestSeries(rows, type), [rows, type])
   const { data, series } = useMemo(() => buildLatencyChart(rows, type), [rows, type])
   const qualityRows = useMemo(
-    () => buildLatencyQualityRows(filteredRows, type, isMobile ? 30 : 60),
-    [filteredRows, type, isMobile],
+    () => buildLatencyQualityRows(rows, type, isMobile ? 30 : 60),
+    [rows, type, isMobile],
   )
   const [hidden, setHidden] = useState<Set<string>>(() => new Set())
   const empty = series.length === 0
