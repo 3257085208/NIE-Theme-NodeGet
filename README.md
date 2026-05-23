@@ -44,7 +44,7 @@ NodeGet StatusShow 前端主题版。
 
 ## 版本更新
 
-### v1.4.3
+### v1.4.4
 
 - 优化全站字体栈，优先使用 MiSans / HarmonyOS Sans SC，降低中文与数字的割裂感。
 - 首页 VPS 卡片 TCPing 小格子改为按延迟高度变化：≤50ms 为 1/4，高于 300ms 为满高。

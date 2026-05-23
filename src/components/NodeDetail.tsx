@@ -513,11 +513,11 @@ function LatencyQualityView({
           <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
           <span className="tabular-nums text-foreground/90 font-semibold">{avg != null ? ms(avg) : '—'}</span>
         </div>
-        <div className="mt-2 flex h-6 items-end gap-[1px] overflow-hidden rounded-full bg-border/45 px-1.5 py-1 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.14)]">
+        <div className="mt-2 flex h-6 items-end gap-[1px] overflow-hidden rounded-md bg-border/45 px-1.5 py-1 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.14)]">
           {values.map((v, i) => (
             <span
               key={i}
-              className="block flex-1 rounded-full transition-[height,background-color] duration-300"
+              className="block flex-1 rounded-[3px] transition-[height,background-color] duration-300"
               style={{ height: latencySegmentHeight(v), backgroundColor: qualitySegmentColor(v) }}
             />
           ))}
@@ -542,11 +542,11 @@ function LatencyQualityView({
         <span className="inline-block w-4 h-0.5 rounded-full shrink-0" style={{ background: color }} />
         <span className="truncate">{name}</span>
       </span>
-      <div className="flex h-6 items-end gap-[1px] overflow-hidden rounded-full bg-border/45 px-1.5 py-1 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.14)]">
+      <div className="flex h-6 items-end gap-[1px] overflow-hidden rounded-md bg-border/45 px-1.5 py-1 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.14)]">
         {values.map((v, i) => (
           <span
             key={i}
-            className="block flex-1 rounded-full transition-[height,background-color] duration-300"
+            className="block flex-1 rounded-[3px] transition-[height,background-color] duration-300"
             style={{ height: latencySegmentHeight(v), backgroundColor: qualitySegmentColor(v) }}
           />
         ))}

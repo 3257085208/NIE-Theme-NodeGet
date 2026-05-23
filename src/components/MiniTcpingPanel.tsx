@@ -40,7 +40,7 @@ export function MiniTcpingPanel({ node, tcpData, loading = false, error = null, 
   if (series.length === 0) return null
 
   return (
-    <div className="rounded-xl border border-dashed border-border/80 bg-secondary/45 px-3 py-3 sm:px-4 sm:py-3.5 mt-1">
+    <div className="rounded-xl border border-dashed border-border/80 bg-transparent px-3 py-3 sm:px-4 sm:py-3.5 mt-1">
       <div className="mb-2.5 sm:mb-3 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
         <Activity className="h-3.5 w-3.5 text-primary" />
         <span>三网 IPv4 TCPing</span>
@@ -60,7 +60,7 @@ function TcpingRow({ item }: { item: SeriesSummary }) {
   return (
     <div className="grid grid-cols-[38px_minmax(0,1fr)_52px] sm:grid-cols-[44px_minmax(0,1fr)_58px] items-center gap-2 sm:gap-3 text-[11px]">
       <div className="truncate font-semibold text-muted-foreground" title={item.name}>{item.label}</div>
-      <div className="flex h-7 items-end gap-[2px] overflow-hidden rounded-lg bg-border/45 px-1.5 py-1 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.16)]">
+      <div className="flex h-7 items-end gap-[2px] overflow-hidden rounded-none bg-transparent px-0 py-0 shadow-none">
         {item.values.map((v, i) => (
           <span
             key={i}
