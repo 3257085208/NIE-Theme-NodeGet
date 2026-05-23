@@ -217,7 +217,10 @@ export function useNodeTcpLatency(
     }
 
     const onWake = () => {
-      if (document.visibilityState === 'visible') triggerFetch('high', true)
+      if (document.visibilityState !== 'visible') return
+      const entry = pool.entries.find(e => e.name === source)
+      entry?.client.reconnect('页面恢复可见，刷新 TCPing 连接')
+      triggerFetch('high', true)
     }
 
     const timer = window.setInterval(() => {

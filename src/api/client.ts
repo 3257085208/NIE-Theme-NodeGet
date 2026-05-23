@@ -29,6 +29,7 @@ export class RpcClient {
   private pending = new Map<string, Pending>()
   private outbox: string[] = []
   private closed = false
+  private lastManualReconnectAt = 0
   private readyResolve: (() => void) | null = null
   private readyReject: ((e: Error) => void) | null = null
   private readyPromise: Promise<void> = Promise.resolve()
@@ -144,7 +145,11 @@ export class RpcClient {
 
     ws.onclose = ev => {
       clearTimeout(timer)
-      if (this.ws === ws) this.ws = null
+      if (this.ws !== ws) {
+        log(this.name, `stale socket close code=${ev.code}`)
+        return
+      }
+      this.ws = null
       if (!opened) {
         warn(this.name, `close before open code=${ev.code}`)
         this.rejectReady(new Error(`无法连接 ${this.url}`))
@@ -203,6 +208,25 @@ export class RpcClient {
         this.reconnectAfterBrokenSocket(error)
       }
     })
+  }
+
+  reconnect(reason = 'connection refresh') {
+    if (this.closed) return
+    const now = Date.now()
+    if (now - this.lastManualReconnectAt < 1500) return
+    this.lastManualReconnectAt = now
+    const ws = this.ws
+    this.ws = null
+    this.outbox = []
+    this.rejectReady(new Error(reason))
+    this.rejectPending(new Error(reason))
+    this.resetReady()
+    try {
+      ws?.close()
+    } catch {
+      // ignore stale socket close failures
+    }
+    this.connect()
   }
 
   close() {

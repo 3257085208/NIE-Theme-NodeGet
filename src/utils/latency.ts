@@ -87,12 +87,76 @@ function readNumber(value: unknown, depth = 0): number | null {
   return null
 }
 
-export function extractLatencyValue(row: TaskQueryResult, type: LatencyType): number | null {
+export type LatencyFamily = 'ipv4' | 'ipv6'
+
+function readObjectValue(value: unknown, key: string) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const obj = value as Record<string, unknown>
+  if (key in obj) return obj[key]
+  const lowerKey = key.toLowerCase()
+  const found = Object.keys(obj).find(k => k.toLowerCase() === lowerKey)
+  return found ? obj[found] : undefined
+}
+
+function hasFamilyField(value: unknown, family: LatencyFamily, depth = 0): boolean {
+  if (depth > 5 || !value || typeof value !== 'object') return false
+  if (Array.isArray(value)) return value.some(v => hasFamilyField(v, family, depth + 1))
+
+  const obj = value as Record<string, unknown>
+  for (const [key, fieldValue] of Object.entries(obj)) {
+    if (key.toLowerCase() === family && fieldValue !== false && fieldValue != null) return true
+    if (hasFamilyField(fieldValue, family, depth + 1)) return true
+  }
+  return false
+}
+
+export function latencyRowHasFamily(row: TaskQueryResult, family: LatencyFamily) {
+  return hasFamilyField(row.task_event_type, family) || hasFamilyField(row.task_event_result, family)
+}
+
+export function latencyRowFamily(row: TaskQueryResult): LatencyFamily | null {
+  const hasV6 = latencyRowHasFamily(row, 'ipv6')
+  const hasV4 = latencyRowHasFamily(row, 'ipv4')
+  if (hasV6 && !hasV4) return 'ipv6'
+  if (hasV4 && !hasV6) return 'ipv4'
+  return null
+}
+
+export function filterLatencyRowsByFamily(rows: TaskQueryResult[], family: LatencyFamily) {
+  return rows.filter(row => {
+    const hasV6 = latencyRowHasFamily(row, 'ipv6')
+    const hasV4 = latencyRowHasFamily(row, 'ipv4')
+    if (family === 'ipv6') return hasV6
+    return hasV4 || (!hasV4 && !hasV6)
+  })
+}
+
+function readFamilyLatencyValue(result: unknown, type: LatencyType, family?: LatencyFamily) {
+  if (!family) return null
+
+  const direct = readObjectValue(result, type)
+  const directFamilyValue = readNumber(readObjectValue(direct, family))
+  if (directFamilyValue != null) return directFamilyValue
+
+  const familyValue = readObjectValue(result, family)
+  const familyTypeValue = readNumber(readObjectValue(familyValue, type))
+  if (familyTypeValue != null) return familyTypeValue
+
+  const familyNestedValue = readNumber(familyValue)
+  if (familyNestedValue != null) return familyNestedValue
+
+  return null
+}
+
+export function extractLatencyValue(row: TaskQueryResult, type: LatencyType, family?: LatencyFamily): number | null {
   if (!row.success) return null
   const result = row.task_event_result
   if (!result) return null
 
-  const direct = (result as Record<string, unknown>)[type]
+  const familyValue = readFamilyLatencyValue(result, type, family)
+  if (familyValue != null) return familyValue
+
+  const direct = readObjectValue(result, type)
   if (typeof direct === 'number') return Number.isFinite(direct) ? direct : null
 
   const directNested = readNumber(direct)
@@ -202,7 +266,7 @@ function emptyPoint(t: number, names: string[]): ChartPoint {
   return pt
 }
 
-function aggregateRows(rows: TaskQueryResult[], type: LatencyType, options: LatencyBucketOptions = {}) {
+function aggregateRows(rows: TaskQueryResult[], type: LatencyType, options: LatencyBucketOptions = {}, family?: LatencyFamily) {
   const names = seriesNames(rows, type)
   const series: ChartSeries[] = names.map(name => ({ name, color: latencyColor(name) }))
   const { bucketMs, buckets, windowStart, windowEnd } = alignedWindow(options)
@@ -225,7 +289,7 @@ function aggregateRows(rows: TaskQueryResult[], type: LatencyType, options: Late
     if (idx < 0 || idx >= buckets) continue
     const bucket = list[idx]
     bucket.total++
-    const value = extractLatencyValue(row, type)
+    const value = extractLatencyValue(row, type, family)
     if (value == null) bucket.failed++
     else bucket.success.push(value)
   }
@@ -252,9 +316,9 @@ function lossRateFromValues(values: (number | null | undefined)[]) {
   return observed.length ? (observed.filter(v => v == null).length / observed.length) * 100 : 0
 }
 
-export function latencyRowsToHistory(rows: TaskQueryResult[], type: LatencyType) {
+export function latencyRowsToHistory(rows: TaskQueryResult[], type: LatencyType, family?: LatencyFamily) {
   return rows
-    .filter(row => row.success && extractLatencyValue(row, type) != null)
+    .filter(row => row.success && extractLatencyValue(row, type, family) != null)
     .map(row => ({
       t: normalizeTs(row.timestamp),
       cpu: null,
@@ -272,9 +336,8 @@ function chartSeriesNames(rows: TaskQueryResult[]) {
   return [...set].sort((a, b) => a.localeCompare(b))
 }
 
-function pickChartValue(row: TaskQueryResult, type: LatencyType): number | null {
-  const v = row.task_event_result?.[type]
-  return row.success && typeof v === 'number' ? v : null
+function pickChartValue(row: TaskQueryResult, type: LatencyType, family?: LatencyFamily): number | null {
+  return extractLatencyValue(row, type, family)
 }
 
 function forwardFill(data: ChartPoint[], names: string[]) {
@@ -289,7 +352,7 @@ function forwardFill(data: ChartPoint[], names: string[]) {
   }
 }
 
-export function buildLatencyChart(rows: TaskQueryResult[], type: LatencyType) {
+export function buildLatencyChart(rows: TaskQueryResult[], type: LatencyType, family?: LatencyFamily) {
   const names = chartSeriesNames(rows)
   const series: ChartSeries[] = names.map(name => ({ name, color: latencyColor(name) }))
   const byTs = new Map<number, ChartPoint>()
@@ -302,7 +365,7 @@ export function buildLatencyChart(rows: TaskQueryResult[], type: LatencyType) {
       for (const n of names) pt[n] = null
       byTs.set(t, pt)
     }
-    pt[r.cron_source || '未知'] = pickChartValue(r, type)
+    pt[r.cron_source || '未知'] = pickChartValue(r, type, family)
   }
 
   const data = [...byTs.values()].sort((a, b) => a.t - b.t)
@@ -315,13 +378,14 @@ export function buildLatencyQualityRows(
   type: LatencyType,
   segments = 72,
   options: LatencyBucketOptions = {},
+  family?: LatencyFamily,
 ): LatencyQualityRow[] {
   const { names, bySeries } = aggregateRows(rows, type, {
     bucketMs: 60_000,
     buckets: segments,
     includeCurrentBucket: false,
     ...options,
-  })
+  }, family)
 
   return names
     .map<LatencyQualityRow>(name => {
@@ -348,8 +412,8 @@ export function buildLatencyQualityRows(
     })
 }
 
-export function computeLatencyStats(rows: TaskQueryResult[], type: LatencyType): LatencyStats[] {
-  return buildLatencyQualityRows(rows, type, 72).map(({ name, color, avg, jitter, lossRate }) => ({
+export function computeLatencyStats(rows: TaskQueryResult[], type: LatencyType, family?: LatencyFamily): LatencyStats[] {
+  return buildLatencyQualityRows(rows, type, 72, {}, family).map(({ name, color, avg, jitter, lossRate }) => ({
     name,
     color,
     avg,

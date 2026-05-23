@@ -2,7 +2,7 @@ import type { NodeMeta } from '../types'
 
 const DAY_MS = 86400000
 
-const CNY_RATES: Record<string, number> = {
+export const FALLBACK_CNY_RATES: Record<string, number> = {
   CNY: 1,
   RMB: 1,
   '¥': 1,
@@ -38,6 +38,21 @@ const CNY_RATES: Record<string, number> = {
   TRY: 0.23,
 }
 
+const CURRENCY_ALIASES: Record<string, string> = {
+  RMB: 'CNY',
+  '¥': 'CNY',
+  '￥': 'CNY',
+  '$': 'USD',
+  USDT: 'USD',
+  '€': 'EUR',
+  '£': 'GBP',
+  '円': 'JPY',
+  'HK$': 'HKD',
+  NTD: 'TWD',
+  'NT$': 'TWD',
+  'S$': 'SGD',
+}
+
 export function remainingDays(expireTime: string) {
   if (!expireTime) return null
   const exp = new Date(expireTime).setHours(0, 0, 0, 0)
@@ -50,19 +65,25 @@ function safeCycle(cycle: number) {
   return cycle > 0 ? cycle : 30
 }
 
-export function currencyToCnyRate(unit?: string | null) {
+export function normalizeCurrencyUnit(unit?: string | null) {
   const key = String(unit || 'CNY').trim().toUpperCase()
-  return CNY_RATES[key] ?? 1
+  return CURRENCY_ALIASES[key] ?? key
 }
 
-export function priceToCny(price: number, unit?: string | null) {
+export function currencyToCnyRate(unit?: string | null, liveRates?: Record<string, number>) {
+  const key = String(unit || 'CNY').trim().toUpperCase()
+  const code = normalizeCurrencyUnit(unit)
+  return liveRates?.[code] ?? liveRates?.[key] ?? FALLBACK_CNY_RATES[key] ?? FALLBACK_CNY_RATES[code] ?? 1
+}
+
+export function priceToCny(price: number, unit?: string | null, liveRates?: Record<string, number>) {
   if (!Number.isFinite(price) || price <= 0) return 0
-  return price * currencyToCnyRate(unit)
+  return price * currencyToCnyRate(unit, liveRates)
 }
 
-export function monthlyCostCny(meta: NodeMeta) {
+export function monthlyCostCny(meta: NodeMeta, liveRates?: Record<string, number>) {
   if (!meta.price) return 0
-  return priceToCny(meta.price, meta.priceUnit) * (30 / safeCycle(meta.priceCycle))
+  return priceToCny(meta.price, meta.priceUnit, liveRates) * (30 / safeCycle(meta.priceCycle))
 }
 
 export function remainingValue(meta: NodeMeta) {
@@ -72,11 +93,11 @@ export function remainingValue(meta: NodeMeta) {
   return meta.price * ratio
 }
 
-export function remainingValueCny(meta: NodeMeta) {
+export function remainingValueCny(meta: NodeMeta, liveRates?: Record<string, number>) {
   const days = remainingDays(meta.expireTime)
   if (days == null || days <= 0) return 0
   const ratio = Math.min(days / safeCycle(meta.priceCycle), 1)
-  return priceToCny(meta.price, meta.priceUnit) * ratio
+  return priceToCny(meta.price, meta.priceUnit, liveRates) * ratio
 }
 
 export function cycleProgress(meta: NodeMeta) {

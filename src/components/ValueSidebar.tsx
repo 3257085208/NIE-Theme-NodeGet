@@ -5,6 +5,7 @@ import { Badge } from './ui/badge'
 import { Progress } from './ui/progress'
 import { displayName } from '../utils/derive'
 import { cycleProgress, formatCny, hasCost, monthlyCostCny, remainingDays, remainingValueCny } from '../utils/cost'
+import { useCnyExchangeRates } from '../hooks/useExchangeRates'
 import type { Node } from '../types'
 
 interface Props {
@@ -21,8 +22,12 @@ export function ValueSidebar({ nodes }: Props) {
     .sort((a, b) => a.days - b.days)
 
   const within30 = expiringSoon.filter(item => item.days <= 30).length
-  const monthlyCny = billable.reduce((sum, node) => sum + monthlyCostCny(node.meta), 0)
-  const remainingCny = billable.reduce((sum, node) => sum + remainingValueCny(node.meta), 0)
+  const exchange = useCnyExchangeRates(billable.map(node => node.meta.priceUnit))
+  const monthlyCny = billable.reduce((sum, node) => sum + monthlyCostCny(node.meta, exchange.rates), 0)
+  const remainingCny = billable.reduce((sum, node) => sum + remainingValueCny(node.meta, exchange.rates), 0)
+  const rateLabel = exchange.status === 'live'
+    ? `实时汇率${exchange.updatedAt ? ` · ${new Date(exchange.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}`
+    : '接口失败，使用内置汇率'
 
   return (
     <>
@@ -37,7 +42,7 @@ export function ValueSidebar({ nodes }: Props) {
             <Coins className="h-4 w-4 text-primary" />
             <div>
               <div className="text-sm font-bold">剩余价值统计</div>
-              <div className="text-xs text-muted-foreground">按 CNY 统计</div>
+              <div className="text-xs text-muted-foreground">按 CNY 统计 · {rateLabel}</div>
             </div>
           </div>
           <div className="rounded-lg border border-dashed border-border px-3 py-3">
@@ -49,6 +54,11 @@ export function ValueSidebar({ nodes }: Props) {
               <span>剩余价值</span>
               <span className="font-mono">{formatCny(remainingCny)}</span>
             </div>
+            {(exchange.loading || exchange.error) && (
+              <div className="mt-2 text-[11px] text-muted-foreground">
+                {exchange.loading ? '正在刷新汇率…' : exchange.error}
+              </div>
+            )}
           </div>
         </Card>
 
@@ -79,7 +89,7 @@ export function ValueSidebar({ nodes }: Props) {
                   <Progress value={cycleProgress(node.meta)} className="h-1.5 rounded-sm" />
                   <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                     <span>{node.meta.expireTime || '未设置'}</span>
-                    {node.meta.price > 0 ? <span>{formatCny(remainingValueCny(node.meta))}</span> : <span>—</span>}
+                    {node.meta.price > 0 ? <span>{formatCny(remainingValueCny(node.meta, exchange.rates))}</span> : <span>—</span>}
                   </div>
                 </div>
               </div>

@@ -23,7 +23,9 @@ import { cn } from '../utils/cn'
 import {
   buildLatencyChart,
   buildLatencyQualityRows,
+  filterLatencyRowsByFamily,
   qualitySegmentColor,
+  type LatencyFamily,
   type LatencyQualityRow,
 } from '../utils/latency'
 import { useNodeLatency } from '../hooks/useNodeLatency'
@@ -215,13 +217,41 @@ export function NodeDetail({ node, onClose, showSource, pool }: Props) {
         )}
 
         <LatencyBlock
-          title="TCP Ping"
-          rows={tcpData}
+          title="IPv4 TCP Ping"
+          rows={filterLatencyRowsByFamily(tcpData, 'ipv4')}
           type="tcp_ping"
+          family="ipv4"
           loading={latencyLoading}
           error={latencyError}
         />
-        <LatencyBlock title="Ping" rows={pingData} type="ping" loading={latencyLoading} error={latencyError} />
+        {filterLatencyRowsByFamily(tcpData, 'ipv6').length > 0 && (
+          <LatencyBlock
+            title="IPv6 TCP Ping"
+            rows={filterLatencyRowsByFamily(tcpData, 'ipv6')}
+            type="tcp_ping"
+            family="ipv6"
+            loading={latencyLoading}
+            error={latencyError}
+          />
+        )}
+        <LatencyBlock
+          title="IPv4 Ping"
+          rows={filterLatencyRowsByFamily(pingData, 'ipv4')}
+          type="ping"
+          family="ipv4"
+          loading={latencyLoading}
+          error={latencyError}
+        />
+        {filterLatencyRowsByFamily(pingData, 'ipv6').length > 0 && (
+          <LatencyBlock
+            title="IPv6 Ping"
+            rows={filterLatencyRowsByFamily(pingData, 'ipv6')}
+            type="ping"
+            family="ipv6"
+            loading={latencyLoading}
+            error={latencyError}
+          />
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Section title="系统">
@@ -342,16 +372,17 @@ interface LatencyBlockProps {
   type: LatencyType
   loading: boolean
   error?: string | null
+  family?: LatencyFamily
 }
 
 const ms = (v: number) => `${v.toFixed(1)} ms`
 
-function LatencyBlock({ title, rows, type, loading, error }: LatencyBlockProps) {
+function LatencyBlock({ title, rows, type, family, loading, error }: LatencyBlockProps) {
   const isMobile = useIsMobile()
-  const { data, series } = useMemo(() => buildLatencyChart(rows, type), [rows, type])
+  const { data, series } = useMemo(() => buildLatencyChart(rows, type, family), [rows, type, family])
   const qualityRows = useMemo(
-    () => buildLatencyQualityRows(rows, type, isMobile ? 30 : 60),
-    [rows, type, isMobile],
+    () => buildLatencyQualityRows(rows, type, isMobile ? 30 : 60, {}, family),
+    [rows, type, family, isMobile],
   )
   const [hidden, setHidden] = useState<Set<string>>(() => new Set())
   const empty = series.length === 0

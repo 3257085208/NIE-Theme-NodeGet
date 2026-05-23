@@ -1,7 +1,7 @@
 import { Activity } from 'lucide-react'
 import { useMemo } from 'react'
 import { cn } from '../utils/cn'
-import { buildLatencyQualityRows, filterRowsByLatestSeries, qualitySegmentColor } from '../utils/latency'
+import { buildLatencyQualityRows, filterLatencyRowsByFamily, filterRowsByLatestSeries, qualitySegmentColor } from '../utils/latency'
 import type { Node, TaskQueryResult } from '../types'
 
 const SEGMENTS = 22
@@ -33,7 +33,7 @@ export function MiniTcpingPanel({ node, tcpData, loading = false, error = null, 
     <div className="rounded-lg border border-dashed border-border/95 bg-secondary/55 px-3 py-3 sm:px-4 sm:py-3.5 mt-1">
       <div className="mb-2.5 sm:mb-3 flex items-center gap-1.5 text-xs font-black text-muted-foreground">
         <Activity className="h-3.5 w-3.5 text-primary" />
-        <span>三网 TCPing</span>
+        <span>三网 IPv4 TCPing</span>
         {loading && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
       </div>
 
@@ -77,14 +77,15 @@ function TcpingRow({ item }: { item: SeriesSummary }) {
 }
 
 function summarizeTcping(rows: TaskQueryResult[]): SeriesSummary[] {
-  const filteredRows = filterRowsByLatestSeries(rows, 'tcp_ping')
+  const ipv4Rows = filterLatencyRowsByFamily(rows, 'ipv4')
+  const filteredRows = filterRowsByLatestSeries(ipv4Rows, 'tcp_ping')
 
   return buildLatencyQualityRows(filteredRows, 'tcp_ping', SEGMENTS, {
     windowMs: MINI_WINDOW_MS,
     bucketMs: MINI_BUCKET_MS,
     buckets: SEGMENTS,
-    includeCurrentBucket: false,
-  })
+    includeCurrentBucket: true,
+  }, 'ipv4')
     .map(row => ({
       name: row.name,
       label: displayProvider(row.name),

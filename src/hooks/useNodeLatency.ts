@@ -141,10 +141,26 @@ export function useNodeLatency(
     }
 
     fetchOnce()
-    const timer = setInterval(fetchOnce, REFRESH_MS)
+
+    const refetchAfterWake = () => {
+      if (document.visibilityState !== 'visible') return
+      entry.client.reconnect('页面恢复可见，刷新延迟连接')
+      fetchOnce()
+    }
+
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') fetchOnce()
+    }, REFRESH_MS)
+    document.addEventListener('visibilitychange', refetchAfterWake)
+    window.addEventListener('focus', refetchAfterWake)
+    window.addEventListener('online', refetchAfterWake)
+
     return () => {
       cancelled = true
       clearInterval(timer)
+      document.removeEventListener('visibilitychange', refetchAfterWake)
+      window.removeEventListener('focus', refetchAfterWake)
+      window.removeEventListener('online', refetchAfterWake)
     }
   }, [pool, source, uuid])
 
