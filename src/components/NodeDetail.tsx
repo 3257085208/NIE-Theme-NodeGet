@@ -23,7 +23,7 @@ import { cn } from '../utils/cn'
 import {
   buildLatencyChart,
   buildLatencyQualityRows,
-  filterLatencyRowsByFamily,
+  filterLatencyRowsByFamilyAndType,
   qualitySegmentColor,
   type LatencyFamily,
   type LatencyQualityRow,
@@ -84,6 +84,10 @@ export function NodeDetail({ node, onClose, showSource, pool }: Props) {
     node?.source ?? null,
     node?.uuid ?? null,
   )
+  const ipv4TcpRows = useMemo(() => filterLatencyRowsByFamilyAndType(tcpData, 'ipv4', 'tcp_ping'), [tcpData])
+  const ipv6TcpRows = useMemo(() => filterLatencyRowsByFamilyAndType(tcpData, 'ipv6', 'tcp_ping'), [tcpData])
+  const ipv4PingRows = useMemo(() => filterLatencyRowsByFamilyAndType(pingData, 'ipv4', 'ping'), [pingData])
+  const ipv6PingRows = useMemo(() => filterLatencyRowsByFamilyAndType(pingData, 'ipv6', 'ping'), [pingData])
   if (!node) return null
 
   const u = deriveUsage(node)
@@ -216,36 +220,40 @@ export function NodeDetail({ node, onClose, showSource, pool }: Props) {
           </Section>
         )}
 
-        <LatencyBlock
-          title="IPv4 TCP Ping"
-          rows={filterLatencyRowsByFamily(tcpData, 'ipv4')}
-          type="tcp_ping"
-          family="ipv4"
-          loading={latencyLoading}
-          error={latencyError}
-        />
-        {filterLatencyRowsByFamily(tcpData, 'ipv6').length > 0 && (
+        {ipv4TcpRows.length > 0 && (
+          <LatencyBlock
+            title="IPv4 TCP Ping"
+            rows={ipv4TcpRows}
+            type="tcp_ping"
+            family="ipv4"
+            loading={latencyLoading}
+            error={latencyError}
+          />
+        )}
+        {ipv6TcpRows.length > 0 && (
           <LatencyBlock
             title="IPv6 TCP Ping"
-            rows={filterLatencyRowsByFamily(tcpData, 'ipv6')}
+            rows={ipv6TcpRows}
             type="tcp_ping"
             family="ipv6"
             loading={latencyLoading}
             error={latencyError}
           />
         )}
-        <LatencyBlock
-          title="IPv4 Ping"
-          rows={filterLatencyRowsByFamily(pingData, 'ipv4')}
-          type="ping"
-          family="ipv4"
-          loading={latencyLoading}
-          error={latencyError}
-        />
-        {filterLatencyRowsByFamily(pingData, 'ipv6').length > 0 && (
+        {ipv4PingRows.length > 0 && (
+          <LatencyBlock
+            title="IPv4 Ping"
+            rows={ipv4PingRows}
+            type="ping"
+            family="ipv4"
+            loading={latencyLoading}
+            error={latencyError}
+          />
+        )}
+        {ipv6PingRows.length > 0 && (
           <LatencyBlock
             title="IPv6 Ping"
-            rows={filterLatencyRowsByFamily(pingData, 'ipv6')}
+            rows={ipv6PingRows}
             type="ping"
             family="ipv6"
             loading={latencyLoading}

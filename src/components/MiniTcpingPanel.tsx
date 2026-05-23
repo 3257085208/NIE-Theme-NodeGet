@@ -1,7 +1,14 @@
 import { Activity } from 'lucide-react'
 import { useMemo } from 'react'
 import { cn } from '../utils/cn'
-import { buildLatencyQualityRows, filterLatencyRowsByFamily, filterRowsByLatestSeries, qualitySegmentColor } from '../utils/latency'
+import {
+  buildLatencyQualityRows,
+  filterLatencyRowsByFamilyAndType,
+  filterRowsByLatestSeries,
+  parseLatencyTarget,
+  providerLabelFromCode,
+  qualitySegmentColor,
+} from '../utils/latency'
 import type { Node, TaskQueryResult } from '../types'
 
 const SEGMENTS = 22
@@ -29,6 +36,8 @@ interface SeriesSummary {
 export function MiniTcpingPanel({ node, tcpData, loading = false, error = null, compact = false }: Props) {
   const series = useMemo(() => summarizeTcping(tcpData), [tcpData])
 
+  if (series.length === 0) return null
+
   return (
     <div className="rounded-lg border border-dashed border-border/95 bg-secondary/55 px-3 py-3 sm:px-4 sm:py-3.5 mt-1">
       <div className="mb-2.5 sm:mb-3 flex items-center gap-1.5 text-xs font-black text-muted-foreground">
@@ -37,17 +46,11 @@ export function MiniTcpingPanel({ node, tcpData, loading = false, error = null, 
         {loading && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
       </div>
 
-      {series.length > 0 ? (
-        <div className="space-y-2.5 sm:space-y-3">
-          {series.slice(0, 3).map(item => (
-            <TcpingRow key={item.name} item={item} />
-          ))}
-        </div>
-      ) : (
-        <div className="flex min-h-[92px] items-center justify-center rounded-md border border-dashed border-border px-4 text-center text-[11px] font-bold text-muted-foreground leading-5">
-          {loading ? '读取 TCPing…' : error ? simplifyError(error) : compact ? '打开详情查看 TCPing' : '暂无 TCPing 数据'}
-        </div>
-      )}
+      <div className="space-y-2.5 sm:space-y-3">
+        {series.slice(0, 3).map(item => (
+          <TcpingRow key={item.name} item={item} />
+        ))}
+      </div>
     </div>
   )
 }
@@ -77,8 +80,8 @@ function TcpingRow({ item }: { item: SeriesSummary }) {
 }
 
 function summarizeTcping(rows: TaskQueryResult[]): SeriesSummary[] {
-  const ipv4Rows = filterLatencyRowsByFamily(rows, 'ipv4')
-  const filteredRows = filterRowsByLatestSeries(ipv4Rows, 'tcp_ping')
+  const ipv4TcpRows = filterLatencyRowsByFamilyAndType(rows, 'ipv4', 'tcp_ping')
+  const filteredRows = filterRowsByLatestSeries(ipv4TcpRows, 'tcp_ping')
 
   return buildLatencyQualityRows(filteredRows, 'tcp_ping', SEGMENTS, {
     windowMs: MINI_WINDOW_MS,
@@ -86,6 +89,7 @@ function summarizeTcping(rows: TaskQueryResult[]): SeriesSummary[] {
     buckets: SEGMENTS,
     includeCurrentBucket: true,
   }, 'ipv4')
+    .filter(row => row.values.some(v => v !== undefined))
     .map(row => ({
       name: row.name,
       label: displayProvider(row.name),
@@ -98,6 +102,10 @@ function summarizeTcping(rows: TaskQueryResult[]): SeriesSummary[] {
 }
 
 function displayProvider(name: string) {
+  const target = parseLatencyTarget(name)
+  const targetLabel = providerLabelFromCode(target?.provider)
+  if (targetLabel) return targetLabel
+
   const cleaned = name
     .replace(/^tcping[-_]?/i, '')
     .replace(/^tcp[-_]?ping[-_]?/i, '')

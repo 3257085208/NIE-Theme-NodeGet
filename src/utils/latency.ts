@@ -89,6 +89,100 @@ function readNumber(value: unknown, depth = 0): number | null {
 
 export type LatencyFamily = 'ipv4' | 'ipv6'
 
+export interface LatencyTargetInfo {
+  target: string
+  city: string
+  provider: string
+  family: LatencyFamily
+  protocol: LatencyType
+  port: number | null
+}
+
+const LATENCY_TARGET_RE = /([a-z0-9]+)-([a-z0-9]+)-(v[46])\.ip\.([a-z0-9.-]+)(?::(\d{1,5}))?/i
+
+export function parseLatencyTarget(value: string | null | undefined): LatencyTargetInfo | null {
+  if (!value) return null
+  const match = value.match(LATENCY_TARGET_RE)
+  if (!match) return null
+
+  const portText = match[5]
+  const port = portText ? Number(portText) : null
+
+  return {
+    target: match[0],
+    city: match[1].toLowerCase(),
+    provider: match[2].toLowerCase(),
+    family: match[3].toLowerCase() === 'v6' ? 'ipv6' : 'ipv4',
+    protocol: port != null && Number.isFinite(port) ? 'tcp_ping' : 'ping',
+    port: port != null && Number.isFinite(port) ? port : null,
+  }
+}
+
+function collectStrings(value: unknown, output: string[], depth = 0) {
+  if (depth > 4 || value == null || output.length >= 40) return
+  if (typeof value === 'string') {
+    output.push(value)
+    return
+  }
+  if (typeof value !== 'object') return
+
+  if (Array.isArray(value)) {
+    for (const item of value) collectStrings(item, output, depth + 1)
+    return
+  }
+
+  const obj = value as Record<string, unknown>
+  const preferredKeys = [
+    'target',
+    'task_target',
+    'taskTarget',
+    'destination',
+    'address',
+    'host',
+    'hostname',
+    'url',
+    'endpoint',
+    'source',
+    'cron_source',
+  ]
+
+  for (const key of preferredKeys) {
+    if (key in obj) collectStrings(obj[key], output, depth + 1)
+  }
+  for (const [key, item] of Object.entries(obj)) {
+    if (!preferredKeys.includes(key)) collectStrings(item, output, depth + 1)
+  }
+}
+
+export function latencyRowTarget(row: TaskQueryResult): LatencyTargetInfo | null {
+  const candidates: string[] = []
+  collectStrings(row.cron_source, candidates)
+  collectStrings(row.task_event_type, candidates)
+  collectStrings(row.task_event_result, candidates)
+
+  for (const value of candidates) {
+    const parsed = parseLatencyTarget(value)
+    if (parsed) return parsed
+  }
+  return null
+}
+
+export function latencyRowProtocol(row: TaskQueryResult): LatencyType | null {
+  return latencyRowTarget(row)?.protocol ?? null
+}
+
+export function providerLabelFromCode(provider: string | null | undefined) {
+  const code = provider?.toLowerCase()
+  if (code === 'ct' || code === 'telecom') return '电信'
+  if (code === 'cu' || code === 'unicom') return '联通'
+  if (code === 'cm' || code === 'mobile') return '移动'
+  return provider || ''
+}
+
+export function familyShortName(family: LatencyFamily) {
+  return family === 'ipv6' ? 'IPv6' : 'IPv4'
+}
+
 function readObjectValue(value: unknown, key: string) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
   const obj = value as Record<string, unknown>
@@ -111,23 +205,35 @@ function hasFamilyField(value: unknown, family: LatencyFamily, depth = 0): boole
 }
 
 export function latencyRowHasFamily(row: TaskQueryResult, family: LatencyFamily) {
+  const target = latencyRowTarget(row)
+  if (target) return target.family === family
   return hasFamilyField(row.task_event_type, family) || hasFamilyField(row.task_event_result, family)
 }
 
 export function latencyRowFamily(row: TaskQueryResult): LatencyFamily | null {
-  const hasV6 = latencyRowHasFamily(row, 'ipv6')
-  const hasV4 = latencyRowHasFamily(row, 'ipv4')
+  const target = latencyRowTarget(row)
+  if (target) return target.family
+
+  const hasV6 = hasFamilyField(row.task_event_type, 'ipv6') || hasFamilyField(row.task_event_result, 'ipv6')
+  const hasV4 = hasFamilyField(row.task_event_type, 'ipv4') || hasFamilyField(row.task_event_result, 'ipv4')
   if (hasV6 && !hasV4) return 'ipv6'
   if (hasV4 && !hasV6) return 'ipv4'
   return null
 }
 
 export function filterLatencyRowsByFamily(rows: TaskQueryResult[], family: LatencyFamily) {
+  return rows.filter(row => latencyRowFamily(row) === family)
+}
+
+export function filterLatencyRowsByFamilyAndType(
+  rows: TaskQueryResult[],
+  family: LatencyFamily,
+  type: LatencyType,
+) {
   return rows.filter(row => {
-    const hasV6 = latencyRowHasFamily(row, 'ipv6')
-    const hasV4 = latencyRowHasFamily(row, 'ipv4')
-    if (family === 'ipv6') return hasV6
-    return hasV4 || (!hasV4 && !hasV6)
+    const target = latencyRowTarget(row)
+    if (target) return target.family === family && target.protocol === type
+    return latencyRowFamily(row) === family
   })
 }
 
@@ -166,12 +272,19 @@ export function extractLatencyValue(row: TaskQueryResult, type: LatencyType, fam
 }
 
 export function latencySeriesName(row: TaskQueryResult, type?: LatencyType) {
-  const name = row.cron_source || (type === 'tcp_ping' ? 'TCP Ping' : type === 'ping' ? 'Ping' : '未知')
+  const target = latencyRowTarget(row)?.target
+  const name = row.cron_source || target || (type === 'tcp_ping' ? 'TCP Ping' : type === 'ping' ? 'Ping' : '未知')
   return name.trim() || '未知'
 }
 
 
 export function providerKeyFromSeries(name: string) {
+  const target = parseLatencyTarget(name)
+  const provider = target?.provider
+  if (provider === 'ct') return 'telecom'
+  if (provider === 'cu') return 'unicom'
+  if (provider === 'cm') return 'mobile'
+
   const lower = name.toLowerCase()
   if (name.includes('电信') || /(^|[^a-z])ct([^a-z]|$)/.test(lower) || lower.includes('telecom')) return 'telecom'
   if (name.includes('联通') || /(^|[^a-z])cu([^a-z]|$)/.test(lower) || lower.includes('unicom')) return 'unicom'
@@ -330,9 +443,9 @@ export function latencyRowsToHistory(rows: TaskQueryResult[], type: LatencyType,
     .sort((a, b) => a.t - b.t)
 }
 
-function chartSeriesNames(rows: TaskQueryResult[]) {
+function chartSeriesNames(rows: TaskQueryResult[], type: LatencyType) {
   const set = new Set<string>()
-  for (const r of rows) set.add(r.cron_source || '未知')
+  for (const r of rows) set.add(latencySeriesName(r, type))
   return [...set].sort((a, b) => a.localeCompare(b))
 }
 
@@ -353,7 +466,7 @@ function forwardFill(data: ChartPoint[], names: string[]) {
 }
 
 export function buildLatencyChart(rows: TaskQueryResult[], type: LatencyType, family?: LatencyFamily) {
-  const names = chartSeriesNames(rows)
+  const names = chartSeriesNames(rows, type)
   const series: ChartSeries[] = names.map(name => ({ name, color: latencyColor(name) }))
   const byTs = new Map<number, ChartPoint>()
 
@@ -365,7 +478,7 @@ export function buildLatencyChart(rows: TaskQueryResult[], type: LatencyType, fa
       for (const n of names) pt[n] = null
       byTs.set(t, pt)
     }
-    pt[r.cron_source || '未知'] = pickChartValue(r, type, family)
+    pt[latencySeriesName(r, type)] = pickChartValue(r, type, family)
   }
 
   const data = [...byTs.values()].sort((a, b) => a.t - b.t)
