@@ -1,8 +1,8 @@
 {
   "name": "NIE Theme NodeGet",
   "short": "NIEThemeNodeGet",
-  "description": "A clean card-style NodeGet public status theme with IPv4/IPv6 latency panels and value statistics.",
-  "author": "3257085208",
+  "description": "NIE Theme NodeGet - clean card-style NodeGet public status theme with IPv4/IPv6 Ping/TCPing panels, realtime exchange rates and value statistics.",
+  "author": "MarkNKX",
   "repository": "https://github.com/3257085208/NIE-Theme-NodeGet",
   "dist_page": "https://nie-termes-test.pages.dev",
   "user_preferences_form": {
@@ -38,6 +38,6 @@
       }
     ]
   },
-  "version": "1.3.2",
+  "version": "1.4.0",
   "license": "AGPL-3.0"
 }

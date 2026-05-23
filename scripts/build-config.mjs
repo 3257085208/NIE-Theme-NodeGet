@@ -116,13 +116,9 @@ function normalizeConfig(input) {
     .filter(item => item.backend_url || item.token)
 
   return {
+    // NodeGet 规范主题以 user_preferences 为后台用户配置的唯一权威来源。
+    // 不再输出顶层 site_name/site_logo/theme_config，避免后台保存后被旧兼容字段覆盖。
     user_preferences: prefs,
-    site_name: prefs.site_name,
-    site_logo: prefs.site_logo,
-    site_log: prefs.site_logo,
-    footer: prefs.footer,
-    refresh_interval_ms: prefs.refresh_interval_ms,
-    theme_config: prefs,
     site_tokens: cleanedTokens,
   }
 }

@@ -51,14 +51,18 @@ function readRawPrefs(obj: RawObject): SiteUserPreferences {
   const themeConfigUserPreferences = asObject(themeConfig.user_preferences)
 
   // 兼容两套配置结构：
-  // 1. 官方 StatusShow README/源码：config.json -> user_preferences
-  // 2. NodeGet Dev 文档旧示例：config.json -> site_name/site_log/theme_config
-  // 合并优先级故意让 theme_config 更高，避免导入后台保存到 theme_config 后仍被模板默认值覆盖。
+  // 1. NodeGet 规范主题：config.json -> user_preferences
+  // 2. 旧/第三方主题常见结构：config.json -> site_name/site_log/theme_config
+  //
+  // 注意：后台“用户配置”通常只改 user_preferences，旧版构建脚本可能还会留下
+  // 顶层 site_name/site_logo 这些兼容字段。如果顶层旧值优先，就会把后台新配置覆盖掉。
+  // 所以这里必须让 user_preferences 优先级最高，HudsonStatus 这类主题也是只依赖
+  // config.json 里的 user_preferences 来更新站点名和 Logo。
   return {
-    ...readPrefsFromObject(userPreferences),
     ...readPrefsFromObject(obj),
-    ...readPrefsFromObject(themeConfigUserPreferences),
     ...readPrefsFromObject(themeConfig),
+    ...readPrefsFromObject(themeConfigUserPreferences),
+    ...readPrefsFromObject(userPreferences),
   }
 }
 
@@ -107,6 +111,26 @@ function normalizeConfig(userRaw: unknown, themeRaw?: unknown): SiteConfig {
   }
 }
 
+function applySiteMeta(config: SiteConfig) {
+  if (typeof document === 'undefined') return
+  const prefs = config.user_preferences ?? {}
+  const title = asString(prefs.site_name, asString(config.site_name, 'NodeGet Status'))
+  if (title) document.title = title
+
+  const logo = asString(prefs.site_logo, asString(config.site_logo ?? config.site_log, ''))
+  if (!logo) return
+  let icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+  if (!icon) {
+    icon = document.createElement('link')
+    icon.rel = 'icon'
+    document.head.appendChild(icon)
+  }
+  icon.href = logo
+  if (logo.endsWith('.svg')) icon.type = 'image/svg+xml'
+  else if (logo.endsWith('.png')) icon.type = 'image/png'
+  else if (logo.endsWith('.ico')) icon.type = 'image/x-icon'
+}
+
 function cacheBustUrl(path: string) {
   const random = typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID().replaceAll('-', '').slice(0, 12)
@@ -137,12 +161,14 @@ export function useConfig() {
   useEffect(() => {
     let alive = true
     Promise.all([
-      fetchJson('config.json', true),
-      fetchJson('nodeget-theme.json', false),
+      fetchJson('./config.json', true),
+      fetchJson('./nodeget-theme.json', false),
     ])
       .then(([userConfig, themeConfig]) => {
         if (!alive) return
-        setConfig(normalizeConfig(userConfig, themeConfig))
+        const normalized = normalizeConfig(userConfig, themeConfig)
+        applySiteMeta(normalized)
+        setConfig(normalized)
         setError(null)
       })
       .catch(e => {
