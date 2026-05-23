@@ -60,7 +60,7 @@ function TcpingRow({ item }: { item: SeriesSummary }) {
   return (
     <div className="grid grid-cols-[38px_minmax(0,1fr)_52px] sm:grid-cols-[44px_minmax(0,1fr)_58px] items-center gap-2 sm:gap-3 text-[11px]">
       <div className="truncate font-semibold text-muted-foreground" title={item.name}>{item.label}</div>
-      <div className="flex h-7 items-end gap-[2px] overflow-hidden rounded-none bg-transparent px-0 py-0 shadow-none">
+      <div className="flex h-5 items-end gap-[2px] overflow-hidden rounded-none bg-transparent px-0 py-0 shadow-none">
         {item.values.map((v, i) => (
           <span
             key={i}
