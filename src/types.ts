@@ -136,6 +136,7 @@ export interface Node {
 export interface SiteUserPreferences {
   site_name?: string
   site_logo?: string
+  site_log?: string
   footer?: string
   refresh_interval_ms?: number
   [key: string]: unknown
@@ -151,8 +152,10 @@ export interface SiteConfig {
   user_preferences?: SiteUserPreferences
   site_name?: string
   site_logo?: string
+  site_log?: string
   footer?: string
   refresh_interval_ms?: number
+  theme_config?: SiteUserPreferences & Record<string, unknown>
   site_tokens: SiteToken[]
 }
 

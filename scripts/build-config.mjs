@@ -75,7 +75,7 @@ function legacySiteTokens() {
     const raw = process.env[`SITE_${i}`]
     if (!raw) break
     const fields = parseSite(raw)
-    const backend = fields.backend_url || fields.url || fields.ws || ''
+    const backend = fields.backend_url || fields.websocket || fields.ws || fields.url || ''
     const token = fields.token || ''
     if (!backend && !token) continue
     tokens.push({
@@ -96,6 +96,7 @@ function normalizeConfig(input) {
 
   if (typeof input?.site_name === 'string') prefs.site_name = input.site_name
   if (typeof input?.site_logo === 'string') prefs.site_logo = input.site_logo
+  if (typeof input?.site_log === 'string') prefs.site_logo = input.site_log
   if (typeof input?.footer === 'string') prefs.footer = input.footer
   if (Number.isFinite(Number(input?.refresh_interval_ms))) prefs.refresh_interval_ms = Number(input.refresh_interval_ms)
 
@@ -109,7 +110,7 @@ function normalizeConfig(input) {
   const cleanedTokens = siteTokens
     .map((item, index) => ({
       name: String(item?.name || `master-${index + 1}`),
-      backend_url: String(item?.backend_url || item?.url || ''),
+      backend_url: String(item?.backend_url || item?.websocket || item?.ws || item?.url || ''),
       token: String(item?.token || ''),
     }))
     .filter(item => item.backend_url || item.token)
@@ -118,8 +119,10 @@ function normalizeConfig(input) {
     user_preferences: prefs,
     site_name: prefs.site_name,
     site_logo: prefs.site_logo,
+    site_log: prefs.site_logo,
     footer: prefs.footer,
     refresh_interval_ms: prefs.refresh_interval_ms,
+    theme_config: prefs,
     site_tokens: cleanedTokens,
   }
 }
