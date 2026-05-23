@@ -44,12 +44,12 @@ export function MiniTcpingPanel({ node, tcpData, loading = false, error = null, 
     <div className="rounded-xl border border-dashed border-border/80 bg-transparent px-3 py-3 sm:px-4 sm:py-3.5 mt-1">
       <div className="mb-2.5 sm:mb-3 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
         <Activity className="h-3.5 w-3.5 text-primary" />
-        <span>三网 IPv4 TCPing</span>
+        <span>IPv4 TCPing</span>
         {loading && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
       </div>
 
-      <div className="space-y-2.5 sm:space-y-3">
-        {series.slice(0, 3).map(item => (
+      <div className="space-y-2 sm:space-y-2.5">
+        {series.map(item => (
           <TcpingRow key={item.name} item={item} />
         ))}
       </div>
@@ -59,8 +59,8 @@ export function MiniTcpingPanel({ node, tcpData, loading = false, error = null, 
 
 function TcpingRow({ item }: { item: SeriesSummary }) {
   return (
-    <div className="grid grid-cols-[56px_minmax(0,1fr)_52px] sm:grid-cols-[64px_minmax(0,1fr)_58px] items-center gap-2 sm:gap-3 text-[11px]">
-      <div className="truncate font-semibold text-muted-foreground" title={item.name}>{item.label}</div>
+    <div className="grid grid-cols-[64px_minmax(0,1fr)_52px] sm:grid-cols-[76px_minmax(0,1fr)_58px] items-center gap-2 sm:gap-3 text-[11px]">
+      <div className="truncate font-semibold text-muted-foreground" title={`${item.label} · ${item.name}`}>{item.label}</div>
       <div className="flex h-5 items-end gap-[2px] overflow-hidden rounded-none bg-transparent px-0 py-0 shadow-none">
         {item.values.map((v, i) => (
           <span
