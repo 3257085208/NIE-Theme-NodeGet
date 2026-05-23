@@ -811,15 +811,15 @@ function MapNodePopoverCard({
                 <div className="mt-0.5 text-[10px] text-muted-foreground">{n.source}</div>
                 <div className="mt-2 grid grid-cols-[34px_1fr] gap-x-2 gap-y-0.5 text-[10px] leading-4">
                   <span className="text-muted-foreground">CPU</span>
-                  <span className="text-right font-mono">{pct(u.cpu)}</span>
+                  <span className="text-right tabular-nums">{pct(u.cpu)}</span>
                   <span className="text-muted-foreground">内存</span>
-                  <span className="text-right font-mono">{pct(u.mem)}</span>
+                  <span className="text-right tabular-nums">{pct(u.mem)}</span>
                   <span className="text-muted-foreground">↑ 入</span>
-                  <span className="text-right font-mono">{bytes(u.netIn)}/s</span>
+                  <span className="text-right tabular-nums">{bytes(u.netIn)}/s</span>
                   <span className="text-muted-foreground">↓ 出</span>
-                  <span className="text-right font-mono">{bytes(u.netOut)}/s</span>
+                  <span className="text-right tabular-nums">{bytes(u.netOut)}/s</span>
                   <span className="text-muted-foreground">运行</span>
-                  <span className="text-right font-mono">{uptime(u.uptime)}</span>
+                  <span className="text-right tabular-nums">{uptime(u.uptime)}</span>
                 </div>
               </div>
             </div>

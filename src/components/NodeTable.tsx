@@ -91,9 +91,9 @@ export function NodeTable({ nodes, onOpen }: Props) {
                     hint={u.diskTotal ? `${bytes(u.diskUsed)} / ${bytes(u.diskTotal)}` : null}
                   />
                 </TableCell>
-                <TableCell className="font-mono">{bytes(u.netIn || 0)}/s</TableCell>
-                <TableCell className="font-mono">{bytes(u.netOut || 0)}/s</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">
+                <TableCell className="tabular-nums">{bytes(u.netIn || 0)}/s</TableCell>
+                <TableCell className="tabular-nums">{bytes(u.netOut || 0)}/s</TableCell>
+                <TableCell className="tabular-nums text-xs text-muted-foreground">
                   {relativeAge(u.ts)}
                 </TableCell>
               </TableRow>
@@ -109,7 +109,7 @@ function CellBar({ value, hint }: { value: number | undefined; hint?: string | n
   return (
     <div className="flex items-center gap-2 min-w-[110px]" title={hint || ''}>
       <Progress value={value} indicatorClassName={loadColor(value)} className="flex-1 h-1.5" />
-      <span className="font-mono text-xs w-12 text-right">{pct(value)}</span>
+      <span className="tabular-nums text-xs w-12 text-right">{pct(value)}</span>
     </div>
   )
 }

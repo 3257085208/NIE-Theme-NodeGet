@@ -4,7 +4,7 @@
   "description": "NIE Theme NodeGet - clean card-style NodeGet public status theme with IPv4/IPv6 Ping/TCPing panels, realtime exchange rates and value statistics.",
   "author": "MarkNKX",
   "repository": "https://github.com/3257085208/NIE-Theme-NodeGet",
-  "dist_page": "https://nie-termes-test.pages.dev",
+  "dist_page": "https://dash.themes.qq.sg",
   "user_preferences_form": {
     "version": "0.0.1",
     "items": [
@@ -38,6 +38,6 @@
       }
     ]
   },
-  "version": "1.4.1",
+  "version": "1.4.2",
   "license": "AGPL-3.0"
 }

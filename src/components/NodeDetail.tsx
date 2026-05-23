@@ -25,6 +25,7 @@ import {
   buildLatencyQualityRows,
   filterLatencyRowsByFamilyAndType,
   qualitySegmentColor,
+  latencySegmentHeight,
   type LatencyFamily,
   type LatencyQualityRow,
 } from '../utils/latency'
@@ -149,16 +150,16 @@ export function NodeDetail({ node, onClose, showSource, pool }: Props) {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
         <Section title="资源">
           <div className="grid grid-cols-2 place-items-center gap-x-4 gap-y-6 sm:grid-cols-4 sm:gap-8">
-            <ResourceRing label="CPU" value={u.cpu} sub={loadAvg ?? undefined} size={isMobile ? 112 : 124} strokeWidth={10} centerClassName="text-[18px] font-black text-foreground" labelClassName="mt-2 text-base font-semibold text-foreground" subClassName="mt-3 max-w-[9rem] truncate text-sm font-mono text-muted-foreground" />
+            <ResourceRing label="CPU" value={u.cpu} sub={loadAvg ?? undefined} size={isMobile ? 112 : 124} strokeWidth={10} centerClassName="text-[18px] font-bold text-foreground tabular-nums" labelClassName="mt-2 text-base font-semibold text-foreground" subClassName="mt-3 max-w-[9rem] truncate text-sm tabular-nums text-muted-foreground" />
             <ResourceRing
               label="内存"
               value={u.mem}
               sub={u.memTotal ? `${bytes(u.memUsed)} / ${bytes(u.memTotal)}` : undefined}
               size={isMobile ? 112 : 124}
               strokeWidth={10}
-              centerClassName="text-[18px] font-black text-foreground"
+              centerClassName="text-[18px] font-bold text-foreground tabular-nums"
               labelClassName="mt-2 text-base font-semibold text-foreground"
-              subClassName="mt-3 max-w-[9rem] truncate text-sm font-mono text-muted-foreground"
+              subClassName="mt-3 max-w-[9rem] truncate text-sm tabular-nums text-muted-foreground"
             />
             <ResourceRing
               label="磁盘"
@@ -166,9 +167,9 @@ export function NodeDetail({ node, onClose, showSource, pool }: Props) {
               sub={u.diskTotal ? `${bytes(u.diskUsed)} / ${bytes(u.diskTotal)}` : undefined}
               size={isMobile ? 112 : 124}
               strokeWidth={10}
-              centerClassName="text-[18px] font-black text-foreground"
+              centerClassName="text-[18px] font-bold text-foreground tabular-nums"
               labelClassName="mt-2 text-base font-semibold text-foreground"
-              subClassName="mt-3 max-w-[9rem] truncate text-sm font-mono text-muted-foreground"
+              subClassName="mt-3 max-w-[9rem] truncate text-sm tabular-nums text-muted-foreground"
             />
             <ResourceRing
               label="Swap"
@@ -176,9 +177,9 @@ export function NodeDetail({ node, onClose, showSource, pool }: Props) {
               sub={u.swapTotal ? `${bytes(u.swapUsed)} / ${bytes(u.swapTotal)}` : '无 Swap'}
               size={isMobile ? 112 : 124}
               strokeWidth={10}
-              centerClassName="text-[18px] font-black text-foreground"
+              centerClassName="text-[18px] font-bold text-foreground tabular-nums"
               labelClassName="mt-2 text-base font-semibold text-foreground"
-              subClassName="mt-3 max-w-[9rem] truncate text-sm font-mono text-muted-foreground"
+              subClassName="mt-3 max-w-[9rem] truncate text-sm tabular-nums text-muted-foreground"
             />
           </div>
         </Section>
@@ -320,7 +321,7 @@ function KV({ k, v }: { k: string; v: ReactNode }) {
   return (
     <div className="flex justify-between gap-3 text-sm py-1">
       <span className="text-muted-foreground">{k}</span>
-      <span className="font-mono text-right truncate">{v}</span>
+      <span className="tabular-nums text-right truncate">{v}</span>
     </div>
   )
 }
@@ -341,7 +342,7 @@ function Spark({ data, dataKey, label, stroke, domain, format }: SparkProps) {
     <div className="rounded-md border bg-card/50 p-3">
       <div className="flex justify-between text-[11px] mb-1">
         <span className="text-muted-foreground">{label}</span>
-        <span className="font-mono">{format(last)}</span>
+        <span className="tabular-nums">{format(last)}</span>
       </div>
       <div className="h-20">
         <ResponsiveContainer width="100%" height="100%">
@@ -510,14 +511,18 @@ function LatencyQualityView({
         <div className="flex items-center gap-2">
           <span className="inline-block h-0.5 w-4 rounded-full shrink-0" style={{ background: color }} />
           <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
-          <span className="font-mono text-foreground/90">{avg != null ? ms(avg) : '—'}</span>
+          <span className="tabular-nums text-foreground/90 font-semibold">{avg != null ? ms(avg) : '—'}</span>
         </div>
-        <div className="mt-2 flex h-5 items-stretch gap-[1px] overflow-hidden rounded-md bg-border/55 p-1">
+        <div className="mt-2 flex h-6 items-end gap-[1px] overflow-hidden rounded-full bg-border/45 px-1.5 py-1 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.14)]">
           {values.map((v, i) => (
-            <span key={i} className="block flex-1 rounded-[1px]" style={{ backgroundColor: qualitySegmentColor(v) }} />
+            <span
+              key={i}
+              className="block flex-1 rounded-full transition-[height,background-color] duration-300"
+              style={{ height: latencySegmentHeight(v), backgroundColor: qualitySegmentColor(v) }}
+            />
           ))}
         </div>
-        <div className="mt-2 flex justify-end gap-4 text-[11px] text-muted-foreground font-mono">
+        <div className="mt-2 flex justify-end gap-4 text-[11px] text-muted-foreground tabular-nums">
           <span>抖动 {jitter != null ? ms(jitter) : '—'}</span>
           <span className={cn(lossRate >= 5 && 'text-red-500 font-medium')}>丢包 {lossRate.toFixed(1)}%</span>
         </div>
@@ -537,14 +542,18 @@ function LatencyQualityView({
         <span className="inline-block w-4 h-0.5 rounded-full shrink-0" style={{ background: color }} />
         <span className="truncate">{name}</span>
       </span>
-      <div className="flex h-5 items-stretch gap-[1px] overflow-hidden rounded-md bg-border/55 p-1">
+      <div className="flex h-6 items-end gap-[1px] overflow-hidden rounded-full bg-border/45 px-1.5 py-1 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.14)]">
         {values.map((v, i) => (
-          <span key={i} className="block flex-1 rounded-[1px]" style={{ backgroundColor: qualitySegmentColor(v) }} />
+          <span
+            key={i}
+            className="block flex-1 rounded-full transition-[height,background-color] duration-300"
+            style={{ height: latencySegmentHeight(v), backgroundColor: qualitySegmentColor(v) }}
+          />
         ))}
       </div>
-      <span className="text-right tabular-nums font-mono">{avg != null ? ms(avg) : '—'}</span>
-      <span className="text-right tabular-nums font-mono">{jitter != null ? ms(jitter) : '—'}</span>
-      <span className={cn('text-right tabular-nums font-mono', lossRate >= 5 && 'text-red-500 font-medium')}>
+      <span className="text-right tabular-nums">{avg != null ? ms(avg) : '—'}</span>
+      <span className="text-right tabular-nums">{jitter != null ? ms(jitter) : '—'}</span>
+      <span className={cn('text-right tabular-nums', lossRate >= 5 && 'text-red-500 font-medium')}>
         {lossRate.toFixed(1)}%
       </span>
     </div>

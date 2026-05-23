@@ -46,11 +46,11 @@ export function ValueSidebar({ nodes }: Props) {
           <div className="rounded-lg border border-dashed border-border px-3 py-3">
             <div className="flex items-center justify-between gap-3 text-sm">
               <span className="font-semibold">折算月成本</span>
-              <span className="font-mono text-lg font-black text-foreground">{formatCny(monthlyCny)}</span>
+              <span className="tabular-nums text-lg font-bold text-foreground">{formatCny(monthlyCny)}</span>
             </div>
             <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
               <span>剩余价值</span>
-              <span className="font-mono">{formatCny(remainingCny)}</span>
+              <span className="tabular-nums">{formatCny(remainingCny)}</span>
             </div>
             {(exchange.loading || exchange.error) && (
               <div className="mt-2 text-[11px] text-muted-foreground">
@@ -108,7 +108,7 @@ function CompactCard({ icon: Icon, label, value }: { icon: ComponentType<{ class
         </div>
         <div className="min-w-0">
           <div className="truncate text-xs font-semibold text-muted-foreground">{label}</div>
-          <div className="mt-0.5 truncate text-xl font-black tracking-tight">{value}</div>
+          <div className="mt-0.5 truncate text-xl font-bold tracking-tight">{value}</div>
         </div>
       </div>
     </Card>
@@ -124,7 +124,7 @@ function StatCard({ icon: Icon, label, value, sub }: { icon: ComponentType<{ cla
         </div>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-muted-foreground">{label}</div>
-          <div className="mt-1 text-xl font-black tracking-tight">{value}</div>
+          <div className="mt-1 text-xl font-bold tracking-tight">{value}</div>
           <div className="mt-1 text-[11px] text-muted-foreground">{sub}</div>
         </div>
       </div>

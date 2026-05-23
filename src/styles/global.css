@@ -61,6 +61,20 @@
 
   body {
     @apply bg-background text-foreground font-sans;
+    font-family:
+      "MiSans VF",
+      "MiSans",
+      "HarmonyOS Sans SC",
+      "Alibaba PuHuiTi 3.0",
+      "PingFang SC",
+      "Microsoft YaHei UI",
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+    font-feature-settings: "kern" 1, "tnum" 1;
+    font-variant-numeric: tabular-nums;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

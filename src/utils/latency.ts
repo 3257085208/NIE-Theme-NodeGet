@@ -24,12 +24,12 @@ const FALLBACK_VALUE_KEYS = [
 ]
 
 export const LATENCY_BUCKET_COLORS = {
-  deepGreen: '#16a34a',
-  lightGreen: '#84cc16',
-  lightYellow: '#fde047',
-  deepYellow: '#f59e0b',
-  lightRed: '#f87171',
-  deepRed: '#dc2626',
+  deepGreen: '#69BE7B',
+  lightGreen: '#A7D879',
+  lightYellow: '#E8CC68',
+  deepYellow: '#EFA85F',
+  lightRed: '#E98686',
+  deepRed: '#D96B6B',
 }
 
 export function latencyColor(name: string) {
@@ -39,13 +39,21 @@ export function latencyColor(name: string) {
 }
 
 export function qualitySegmentColor(v: number | null | undefined) {
-  if (v === undefined) return 'rgba(148, 163, 184, 0.36)'
+  if (v === undefined) return 'rgba(148, 163, 184, 0.28)'
   if (v == null) return LATENCY_BUCKET_COLORS.deepRed
-  if (v <= 45) return LATENCY_BUCKET_COLORS.deepGreen
-  if (v <= 90) return LATENCY_BUCKET_COLORS.lightGreen
-  if (v <= 160) return LATENCY_BUCKET_COLORS.lightYellow
+  if (v <= 50) return LATENCY_BUCKET_COLORS.deepGreen
+  if (v <= 150) return LATENCY_BUCKET_COLORS.lightGreen
   if (v <= 300) return LATENCY_BUCKET_COLORS.deepYellow
   return LATENCY_BUCKET_COLORS.lightRed
+}
+
+export function latencySegmentHeight(v: number | null | undefined) {
+  if (v === undefined) return '25%'
+  if (v == null) return '100%'
+  if (v <= 50) return '25%'
+  if (v <= 150) return '50%'
+  if (v <= 300) return '75%'
+  return '100%'
 }
 
 export function normalizeTs(ts: number) {

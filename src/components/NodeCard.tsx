@@ -42,7 +42,7 @@ export function NodeCard({ node, pool }: { node: Node; pool: BackendPool | null 
           {logo && (
             <img src={logo} alt="" className="h-6 w-6 shrink-0 rounded-full object-contain" loading="lazy" />
           )}
-          <span className="min-w-0 flex-1 truncate text-[14px] sm:text-[15px] font-black tracking-wide text-foreground" title={displayName(node)}>
+          <span className="min-w-0 flex-1 truncate text-[14px] sm:text-[15px] font-bold tracking-wide text-foreground" title={displayName(node)}>
             {displayName(node)}
           </span>
           <Flag code={node.meta?.region} className="shrink-0" />
@@ -74,7 +74,7 @@ export function NodeCard({ node, pool }: { node: Node; pool: BackendPool | null 
 
         <MiniTcpingPanel node={node} tcpData={tcpData} loading={tcpLoading} error={tcpError} />
 
-        <div className="mt-auto space-y-1.5 border-t border-dashed border-border pt-3 font-mono text-xs text-muted-foreground">
+        <div className="mt-auto space-y-1.5 border-t border-dashed border-border pt-3 text-xs tabular-nums text-muted-foreground">
           <div className="flex items-center gap-3">
             <AnimatedSpeedStat icon={ArrowDown} value={u.netIn || 0} />
             <AnimatedSpeedStat icon={ArrowUp} value={u.netOut || 0} />
@@ -88,7 +88,7 @@ export function NodeCard({ node, pool }: { node: Node; pool: BackendPool | null 
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {tags.map(t => (
-              <Badge key={t} variant="outline" className="rounded-full border-border bg-secondary px-2 py-0.5 text-[10px] font-extrabold text-muted-foreground hover:border-primary hover:text-primary">
+              <Badge key={t} variant="outline" className="rounded-full border-border bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground hover:border-primary hover:text-primary">
                 {t}
               </Badge>
             ))}

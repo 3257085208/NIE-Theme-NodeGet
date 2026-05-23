@@ -61,7 +61,7 @@ export function OnlineStatusBar({
           <Activity className={cn(compact ? 'h-3.5 w-3.5' : 'h-4 w-4')} />
           {title}
         </span>
-        <span className={cn('ml-auto font-black text-primary', compact ? 'text-[12px]' : 'text-base')}>
+        <span className={cn('ml-auto font-bold text-primary', compact ? 'text-[12px]' : 'text-base')}>
           {pending ? '…' : `${availability.toFixed(0)}%`}
         </span>
       </div>
@@ -107,7 +107,7 @@ function StatusTooltip({ compact, slot, left }: { compact: boolean; slot: Timeli
       )}
       style={{ left, backdropFilter: 'none', opacity: 1 }}
     >
-      <div className="font-mono text-muted-foreground">{timeLabel}</div>
+      <div className="tabular-nums text-muted-foreground">{timeLabel}</div>
       <div className={cn('mt-0.5 flex items-center gap-1 font-semibold', slot.active ? 'text-primary' : 'text-rose-500')}>
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
         {slot.active ? '已连接到 Server' : '未检测到连接'}

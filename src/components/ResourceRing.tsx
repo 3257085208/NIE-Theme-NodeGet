@@ -25,8 +25,8 @@ export function ResourceRing({
   size = 76,
   strokeWidth = 10,
   duration = 900,
-  centerClassName = 'text-[15px] font-black text-foreground',
-  labelClassName = 'mt-1 text-[10px] font-extrabold tracking-wide text-muted-foreground',
+  centerClassName = 'text-[15px] font-bold text-foreground tabular-nums',
+  labelClassName = 'mt-1 text-[10px] font-semibold tracking-wide text-muted-foreground',
   subClassName = 'mt-2 truncate text-[10px] font-bold leading-snug text-muted-foreground',
 }: ResourceRingProps) {
   const target = clampMetric(value)

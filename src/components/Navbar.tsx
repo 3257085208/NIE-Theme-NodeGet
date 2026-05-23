@@ -83,7 +83,7 @@ export function Navbar({
               className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden transition-opacity hover:opacity-80 sm:gap-3"
             >
               {logo && <img src={logo} alt="" className="h-10 w-10 shrink-0 rounded-xl border border-border object-cover sm:h-11 sm:w-11" />}
-              <span className="block max-w-full truncate text-base font-black tracking-wide text-primary sm:text-xl">{siteName}</span>
+              <span className="block max-w-full truncate text-base font-bold tracking-wide text-primary sm:text-xl">{siteName}</span>
             </a>
 
             <div className="hidden shrink-0 items-center gap-2.5 sm:flex">

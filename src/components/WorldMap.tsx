@@ -77,7 +77,7 @@ export function WorldMap({ nodes, onOpen }: Props) {
           <button
             type="button"
             className={cn(
-              'rounded-lg px-4 py-2 text-sm font-black transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]',
+              'rounded-lg px-4 py-2 text-sm font-bold transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]',
               mode === '2d' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
             )}
             onClick={() => setMode('2d')}
@@ -87,7 +87,7 @@ export function WorldMap({ nodes, onOpen }: Props) {
           <button
             type="button"
             className={cn(
-              'rounded-lg px-4 py-2 text-sm font-black transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]',
+              'rounded-lg px-4 py-2 text-sm font-bold transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]',
               mode === '3d' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
             )}
             onClick={() => setMode('3d')}
@@ -97,7 +97,7 @@ export function WorldMap({ nodes, onOpen }: Props) {
         </div>
 
         <div className="text-sm font-semibold text-muted-foreground">
-          当前显示 <span className="font-black text-foreground">{total}</span> 个节点
+          当前显示 <span className="font-bold text-foreground">{total}</span> 个节点
         </div>
       </div>
 
@@ -361,15 +361,15 @@ function MapNodePopoverCard({
                 <div className="mt-0.5 text-[10px] text-muted-foreground">{n.source}</div>
                 <div className="mt-2 grid grid-cols-[34px_1fr] gap-x-2 gap-y-0.5 text-[10px] leading-4">
                   <span className="text-muted-foreground">CPU</span>
-                  <span className="font-mono text-right">{pct(u.cpu)}</span>
+                  <span className="tabular-nums text-right">{pct(u.cpu)}</span>
                   <span className="text-muted-foreground">内存</span>
-                  <span className="font-mono text-right">{pct(u.mem)}</span>
+                  <span className="tabular-nums text-right">{pct(u.mem)}</span>
                   <span className="text-muted-foreground">↑ 入</span>
-                  <span className="font-mono text-right">{bytes(u.netIn)}/s</span>
+                  <span className="tabular-nums text-right">{bytes(u.netIn)}/s</span>
                   <span className="text-muted-foreground">↓ 出</span>
-                  <span className="font-mono text-right">{bytes(u.netOut)}/s</span>
+                  <span className="tabular-nums text-right">{bytes(u.netOut)}/s</span>
                   <span className="text-muted-foreground">运行</span>
-                  <span className="font-mono text-right">{uptime(u.uptime)}</span>
+                  <span className="tabular-nums text-right">{uptime(u.uptime)}</span>
                 </div>
               </div>
             </div>

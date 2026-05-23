@@ -40,7 +40,7 @@ function Chip({
       type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex h-10 items-center rounded-xl border px-3.5 text-sm font-extrabold transition-all duration-150',
+        'inline-flex h-10 items-center rounded-xl border px-3.5 text-sm font-semibold transition-all duration-150',
         selected
           ? 'border-primary bg-primary text-primary-foreground shadow-sm'
           : 'border-border bg-secondary text-muted-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground',
