@@ -2,6 +2,14 @@
 
 NodeGet StatusShow 前端主题版。
 
+## 打包说明
+
+当前压缩包是“两种部署方式合一版”：
+
+- `nodeget-theme-import.zip` / `dist/nodeget-theme.zip`：用于 NodeGet 后台主题导入。
+- 项目源码 + `dist/`：用于独立前端部署、Cloudflare Pages / Workers / Vercel 等。
+
+
 [点击查看预览](https://status.qq.sg)
 
 ## 图片预览
@@ -36,7 +44,7 @@ NodeGet StatusShow 前端主题版。
 
 ## 版本更新
 
-### v1.4.2
+### v1.4.3
 
 - 优化全站字体栈，优先使用 MiSans / HarmonyOS Sans SC，降低中文与数字的割裂感。
 - 首页 VPS 卡片 TCPing 小格子改为按延迟高度变化：≤50ms 为 1/4，高于 300ms 为满高。

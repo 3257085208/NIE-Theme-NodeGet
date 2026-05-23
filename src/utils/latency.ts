@@ -42,17 +42,25 @@ export function qualitySegmentColor(v: number | null | undefined) {
   if (v === undefined) return 'rgba(148, 163, 184, 0.28)'
   if (v == null) return LATENCY_BUCKET_COLORS.deepRed
   if (v <= 50) return LATENCY_BUCKET_COLORS.deepGreen
-  if (v <= 150) return LATENCY_BUCKET_COLORS.lightGreen
-  if (v <= 300) return LATENCY_BUCKET_COLORS.deepYellow
-  return LATENCY_BUCKET_COLORS.lightRed
+  if (v <= 100) return LATENCY_BUCKET_COLORS.lightGreen
+  if (v <= 180) return LATENCY_BUCKET_COLORS.lightYellow
+  if (v <= 260) return LATENCY_BUCKET_COLORS.deepYellow
+  if (v <= 350) return LATENCY_BUCKET_COLORS.lightRed
+  return LATENCY_BUCKET_COLORS.deepRed
 }
 
 export function latencySegmentHeight(v: number | null | undefined) {
-  if (v === undefined) return '25%'
+  if (v === undefined) return '12%'
   if (v == null) return '100%'
-  if (v <= 50) return '25%'
-  if (v <= 150) return '50%'
-  if (v <= 300) return '75%'
+  if (v <= 20) return '10%'
+  if (v <= 35) return '20%'
+  if (v <= 50) return '30%'
+  if (v <= 80) return '40%'
+  if (v <= 110) return '50%'
+  if (v <= 150) return '60%'
+  if (v <= 200) return '70%'
+  if (v <= 250) return '80%'
+  if (v <= 300) return '90%'
   return '100%'
 }
 

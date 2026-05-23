@@ -60,11 +60,11 @@ function TcpingRow({ item }: { item: SeriesSummary }) {
   return (
     <div className="grid grid-cols-[38px_minmax(0,1fr)_52px] sm:grid-cols-[44px_minmax(0,1fr)_58px] items-center gap-2 sm:gap-3 text-[11px]">
       <div className="truncate font-semibold text-muted-foreground" title={item.name}>{item.label}</div>
-      <div className="flex h-6 items-end gap-[2px] overflow-hidden rounded-full bg-border/45 px-1.5 py-1 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.16)]">
+      <div className="flex h-7 items-end gap-[2px] overflow-hidden rounded-lg bg-border/45 px-1.5 py-1 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.16)]">
         {item.values.map((v, i) => (
           <span
             key={i}
-            className="block flex-1 rounded-full transition-[height,background-color,opacity] duration-300"
+            className="block flex-1 rounded-[3px] transition-[height,background-color,opacity] duration-300"
             style={{
               height: latencySegmentHeight(v),
               backgroundColor: qualitySegmentColor(v),
