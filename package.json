@@ -8,7 +8,8 @@
     "prebuild": "node scripts/build-config.mjs",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "postbuild": "node scripts/build-template-config.mjs && node scripts/build-filelist.mjs && node scripts/build-zip.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.2",

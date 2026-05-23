@@ -1,50 +1,12 @@
-import { writeFileSync } from 'node:fs'
-import { resolve, dirname } from 'node:path'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { buildConfig } from '../config/index.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const out = resolve(root, 'public/config.json')
+const config = buildConfig()
 
-function parseSite(raw) {
-  const out = {}
-  const re = /(\w+)\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^,]*))(?:\s*,\s*|\s*$)/g
-  let m
-  while ((m = re.exec(raw))) {
-    const key = m[1]
-    const val = m[2] !== undefined ? m[2].replace(/\\(.)/g, '$1') : (m[3] ?? '').trim()
-    out[key] = val
-  }
-  return out
-}
-
-const tokens = []
-for (let i = 1; ; i++) {
-  const raw = process.env[`SITE_${i}`]
-  if (!raw) break
-  const fields = parseSite(raw)
-  tokens.push({
-    name: fields.name || `master-${i}`,
-    backend_url: fields.backend_url || fields.url || '',
-    token: fields.token || '',
-  })
-}
-
-if (!tokens.length) {
-  console.log('[build-config] no SITE_n env vars, keeping existing public/config.json')
-  process.exit(0)
-}
-
-const refreshIntervalMs = Number(process.env.REFRESH_INTERVAL_MS)
-
-const config = {
-  site_name: process.env.SITE_NAME || 'NodeGet Status',
-  site_logo: process.env.SITE_LOGO || '',
-  footer: process.env.SITE_FOOTER || 'Powered by NodeGet',
-  ...(Number.isFinite(refreshIntervalMs) && refreshIntervalMs > 0
-    ? { refresh_interval_ms: refreshIntervalMs }
-    : {}),
-  site_tokens: tokens,
-}
-
+mkdirSync(resolve(root, 'public'), { recursive: true })
 writeFileSync(out, JSON.stringify(config, null, 2) + '\n')
-console.log(`[build-config] wrote ${tokens.length} site_tokens to public/config.json`)
+console.log(`[build-config] wrote ${config.site_tokens?.length ?? 0} site_tokens to public/config.json`)

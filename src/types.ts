@@ -133,13 +133,46 @@ export interface Node {
   history: HistorySample[]
 }
 
-export interface SiteConfig {
+export interface UserPreferences {
+  site_name?: string
+  site_logo?: string
+  footer?: string
+}
+
+export interface ThemeConfig {
+  name: string
+  short?: string
+  description?: string
+  author?: string
+  repository?: string
+  dist_page?: string
+  user_preferences_form?: {
+    version?: string
+    items?: {
+      key: string
+      name?: string
+      type?: string
+      default?: string
+      help?: string
+    }[]
+  }
+  version?: string
+  license?: string
+}
+
+export interface UserConfig {
+  user_preferences?: UserPreferences
   site_name?: string
   site_logo?: string
   footer?: string
   refresh_interval_ms?: number
   site_tokens: { name: string; backend_url: string; token: string }[]
 }
+
+export interface SiteConfig extends ThemeConfig, UserConfig {
+  user_preferences: UserPreferences
+}
+
 
 export interface TaskQueryResult {
   task_id?: number
