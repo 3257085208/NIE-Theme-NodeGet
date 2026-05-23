@@ -55,7 +55,12 @@ export function MiniTcpingPanel({ node, tcpData, loading = false, error = null, 
           {canToggle && (
             <button
               type="button"
-              onClick={() => setExpanded(v => !v)}
+              onClick={e => {
+                e.stopPropagation()
+                setExpanded(v => !v)
+              }}
+              onMouseDown={e => e.stopPropagation()}
+              onTouchStart={e => e.stopPropagation()}
               className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
               title={expanded ? '收起延迟监控' : `展开全部 ${series.length} 个 IPv4 TCPing 监控`}
               aria-label={expanded ? '收起延迟监控' : '展开全部延迟监控'}

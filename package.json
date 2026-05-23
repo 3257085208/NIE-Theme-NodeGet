@@ -1,7 +1,7 @@
 {
   "name": "nie-theme-nodeget",
   "private": true,
-  "version": "1.4.9",
+  "version": "1.4.10",
   "type": "module",
   "scripts": {
     "dev": "node scripts/build-config.mjs public && vite",
