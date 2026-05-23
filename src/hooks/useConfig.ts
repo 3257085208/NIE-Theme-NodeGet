@@ -24,30 +24,85 @@ function normalizeTokens(value: unknown): SiteToken[] {
     .filter(item => item.backend_url && item.token)
 }
 
-function normalizeConfig(raw: unknown): SiteConfig {
-  const obj = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {}
-  const rawPrefs = obj.user_preferences && typeof obj.user_preferences === 'object'
+function readRawPrefs(obj: Record<string, unknown>): SiteUserPreferences {
+  const nested = obj.user_preferences && typeof obj.user_preferences === 'object'
     ? obj.user_preferences as SiteUserPreferences
     : {}
 
-  const userPreferences: SiteUserPreferences = {
-    ...rawPrefs,
-    site_name: asString(obj.site_name, asString(rawPrefs.site_name, 'NodeGet Status')),
-    site_logo: asString(obj.site_logo, asString(rawPrefs.site_logo, '')),
-    footer: asString(obj.footer, asString(rawPrefs.footer, 'Powered by NodeGet')),
+  const prefs: SiteUserPreferences = { ...nested }
+  if (typeof obj.site_name === 'string') prefs.site_name = obj.site_name
+  if (typeof obj.site_logo === 'string') prefs.site_logo = obj.site_logo
+  if (typeof obj.footer === 'string') prefs.footer = obj.footer
+
+  const refreshInterval = asPositiveNumber(obj.refresh_interval_ms, asPositiveNumber(nested.refresh_interval_ms))
+  if (refreshInterval) prefs.refresh_interval_ms = refreshInterval
+
+  return prefs
+}
+
+function normalizeConfig(userRaw: unknown, themeRaw?: unknown): SiteConfig {
+  const userObj = userRaw && typeof userRaw === 'object' ? userRaw as Record<string, unknown> : {}
+  const themeObj = themeRaw && typeof themeRaw === 'object' ? themeRaw as Record<string, unknown> : {}
+
+  const themeDefaults = new Map<string, unknown>()
+  const form = themeObj.user_preferences_form && typeof themeObj.user_preferences_form === 'object'
+    ? themeObj.user_preferences_form as Record<string, unknown>
+    : null
+  const items = Array.isArray(form?.items) ? form.items : []
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as Record<string, unknown>
+    if (typeof row.key === 'string' && 'default' in row) themeDefaults.set(row.key, row.default)
   }
 
-  const refreshInterval = asPositiveNumber(obj.refresh_interval_ms, asPositiveNumber(rawPrefs.refresh_interval_ms))
+  const rawPrefs = readRawPrefs(userObj)
+  const siteName = asString(rawPrefs.site_name, asString(themeDefaults.get('site_name'), 'NodeGet Status'))
+  const siteLogo = asString(rawPrefs.site_logo, asString(themeDefaults.get('site_logo'), ''))
+  const footer = asString(rawPrefs.footer, asString(themeDefaults.get('footer'), 'Powered by NodeGet'))
+  const refreshInterval = asPositiveNumber(rawPrefs.refresh_interval_ms, asPositiveNumber(themeDefaults.get('refresh_interval_ms')))
+
+  const userPreferences: SiteUserPreferences = {
+    ...Object.fromEntries(themeDefaults),
+    ...rawPrefs,
+    site_name: siteName,
+    site_logo: siteLogo,
+    footer,
+  }
   if (refreshInterval) userPreferences.refresh_interval_ms = refreshInterval
 
   return {
+    ...(themeObj as Partial<SiteConfig>),
+    ...(userObj as Partial<SiteConfig>),
     user_preferences: userPreferences,
-    site_name: userPreferences.site_name,
-    site_logo: userPreferences.site_logo,
-    footer: userPreferences.footer,
-    refresh_interval_ms: userPreferences.refresh_interval_ms,
-    site_tokens: normalizeTokens(obj.site_tokens),
+    site_name: siteName,
+    site_logo: siteLogo,
+    footer,
+    refresh_interval_ms: refreshInterval,
+    site_tokens: normalizeTokens(userObj.site_tokens),
   }
+}
+
+function cacheBustUrl(path: string) {
+  const random = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID().replaceAll('-', '').slice(0, 12)
+    : Math.random().toString(36).slice(2)
+  return `${path}?t=${Date.now()}-${random}`
+}
+
+async function fetchJson(path: string, required: boolean) {
+  const response = await fetch(cacheBustUrl(path), {
+    cache: 'no-store',
+    headers: {
+      Accept: 'application/json',
+      'Cache-Control': 'no-cache',
+      Pragma: 'no-cache',
+    },
+  })
+  if (!response.ok) {
+    if (!required) return null
+    throw new Error(`${path} ${response.status}`)
+  }
+  return response.json() as Promise<unknown>
 }
 
 export function useConfig() {
@@ -56,13 +111,19 @@ export function useConfig() {
 
   useEffect(() => {
     let alive = true
-    fetch('config.json', { cache: 'no-store' })
-      .then(r => {
-        if (!r.ok) throw new Error(`config.json ${r.status}`)
-        return r.json() as Promise<unknown>
+    Promise.all([
+      fetchJson('config.json', true),
+      fetchJson('nodeget-theme.json', false),
+    ])
+      .then(([userConfig, themeConfig]) => {
+        if (!alive) return
+        setConfig(normalizeConfig(userConfig, themeConfig))
+        setError(null)
       })
-      .then(c => alive && setConfig(normalizeConfig(c)))
-      .catch(e => alive && setError(e))
+      .catch(e => {
+        if (!alive) return
+        setError(e instanceof Error ? e : new Error(String(e)))
+      })
     return () => {
       alive = false
     }

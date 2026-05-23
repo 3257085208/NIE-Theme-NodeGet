@@ -243,7 +243,10 @@ export function App() {
     )
   }
 
-  const logo = config.site_logo || DEFAULT_LOGO
+  const sitePrefs = config.user_preferences ?? {}
+  const logo = sitePrefs.site_logo || config.site_logo || DEFAULT_LOGO
+  const siteName = sitePrefs.site_name || config.site_name || 'NodeGet Status'
+  const footerText = sitePrefs.footer || config.footer
 
   const content = (
     <>
@@ -294,7 +297,7 @@ export function App() {
       <Background settings={backgroundSettings} />
       <div className="relative z-10 min-h-screen flex flex-col">
         <Navbar
-          siteName={config.site_name || '你没设置'}
+          siteName={siteName}
           logo={logo}
           query={query}
           onQuery={setQuery}
@@ -336,7 +339,7 @@ export function App() {
           </div>
         </main>
 
-        <Footer text={config.footer} />
+        <Footer text={footerText} />
 
         <NodeDetail
           node={selectedNode}
