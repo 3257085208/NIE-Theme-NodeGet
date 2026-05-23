@@ -1,115 +1,104 @@
-# NodeGet StatusShow Theme
+# NIE Theme NodeGet
 
-NodeGet StatusShow 前端主题版。
+一个基于 NodeGet StatusShow 改造的公开探针前端主题，支持 NodeGet 规范主题结构、主题分发、实时汇率、IPv4/IPv6 Ping 与 TCP Ping 展示。
 
-## 预览
+## 已适配的 NodeGet 主题规范
 
-![904a8493e343c07d5d84f2fa4732ada4.png](https://img.nkx.moe/file/6KZhPpSB.png)
+构建后 `dist/` 会包含 NodeGet 控制面板主题导入需要的文件：
 
-![c1de760a875ca93c01c8355100b1c36d.png](https://img.nkx.moe/file/aKD8feIV.png)
+```txt
+nodeget-theme.json
+nodeget-theme-files.json
+config.json
+custom.css
+custom.js
+download.html
+```
 
-![14a8ea457f3d4b4150e42fe57bf47990.png](https://img.nkx.moe/file/6gIdyk6Q.png)
+同时保留所有静态资源、Vite 构建产物和主题源码逻辑。
 
-![4083964167370ccdb3f9946e7c0600d0.png](https://img.nkx.moe/file/uZdapYTP.png)
+## 推荐分发方式
 
-## 主要改动
+推荐使用 Cloudflare Pages 分发主题。Pages 免费域名、默认 CORS、GitHub 自动构建、IPv4/IPv6 双栈都更适合 NodeGet 主题分发。
 
-- 首页卡片样式
-- CPU / 内存 / 磁盘圆环
-- 背景样式切换
-- 浅色 / 深色模式
-- 地图视图
-- 表格视图
-- 标签筛选
-- 地区筛选
-- 搜索和排序
-- 移动端显示
-- 左下角主题链接
-- 右下角 NodeGet 链接
+导入地址示例：
 
-## 一键部署
+```txt
+https://dash.nodeget.com/#/dashboard/theme-management?add=https://你的主题分发域名
+```
 
-### Cloudflare Workers
+直接下载主题包：
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/3257085208/NIE-Theme-NodeGet)
-
-### Vercel
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/3257085208/NIE-Theme-NodeGet&project-name=NIE-Theme-NodeGet&repository-name=NIE-Theme-NodeGet&env=SITE_NAME,SITE_LOGO,SITE_FOOTER,SITE_1,SITE_2&envDescription=NodeGet%20StatusShow%20Config&envLink=https://nodeget.com/guide/install/status-show)
+```txt
+https://你的主题分发域名/download.html
+```
 
 ## 配置方式
 
-本版本使用环境变量配置。
+推荐使用 NodeGet 标准的 `NODEGET_CONFIG`：
 
-Cloudflare Workers 部署时，请在部署页面的高级设置里添加环境变量，或者部署后到 Worker 的设置里添加。
-
-不要修改 `config.json`。
-
-### 环境变量
-
-```txt
-SITE_NAME=狼牙的探针
-SITE_LOGO=https://example.com/logo.png
-SITE_FOOTER=Powered by NodeGet
-SITE_1=name="master-1",backend_url="wss://m1.example.com",token="abc123"
-SITE_2=name="master-2",backend_url="wss://m2.example.com",token="xyz789"
+```json
+{
+  "user_preferences": {
+    "site_name": "NodeGet Status",
+    "site_logo": "",
+    "footer": "Powered by NodeGet",
+    "refresh_interval_ms": 10000
+  },
+  "site_tokens": [
+    {
+      "name": "master server node 1",
+      "backend_url": "wss://your-backend.example.com",
+      "token": "YOUR_VISITOR_TOKEN_HERE"
+    }
+  ]
+}
 ```
 
-说明：
-
-| 变量 | 说明 |
-| --- | --- |
-| `SITE_NAME` | 站点名称 |
-| `SITE_LOGO` | 站点 Logo |
-| `SITE_FOOTER` | 页脚文字 |
-| `SITE_1` | 第一个主控 |
-| `SITE_2` | 第二个主控 |
-
-`SITE_n` 从 `SITE_1` 开始连续填写，中间不要断。
-
-比如有三个主控，就写：
-
-```txt
-SITE_1=...
-SITE_2=...
-SITE_3=...
-```
-
-不要只写 `SITE_1` 和 `SITE_3`。
-
-`SITE_n` 的格式：
-
-```txt
-name="主控名称",backend_url="wss://你的服务地址",token="Visitor Token"
-```
-
-`backend_url` 一般使用 `wss://`。
-
-Token 在 NodeGet Dashboard 里创建，使用 Visitor 权限模板。
-
-参考官方文档：
-
-```txt
-https://nodeget.com/guide/install/status-show
-```
-
-## 从官方默认前端切换过来
-
-如果之前部署过官方默认 StatusShow 前端，可以这样换：
-
-1. Fork 本仓库
-2. 到已经部署的 Worker 里解绑原来的 GitHub 仓库
-3. 重新连接你 Fork 后的仓库
-4. 检查环境变量是否还在
-5. 重新跑一次构建 / 部署
-
-重新连接仓库后建议手动触发一次构建，让环境变量重新初始化。
-
-## 本地开发
+本地开发可以复制：
 
 ```bash
-git clone https://github.com/3257085208/NIE-Theme-NodeGet.git
-cd NIE-Theme-NodeGet
+cp .env.example .env.local
+```
+
+然后填写 `.env.local` 里的 `NODEGET_CONFIG`。
+
+也兼容旧环境变量：
+
+```txt
+SITE_NAME=NodeGet Status
+SITE_LOGO=
+SITE_FOOTER=Powered by NodeGet
+REFRESH_INTERVAL_MS=10000
+SITE_1=name="master-1",backend_url="wss://your-backend.example.com",token="YOUR_VISITOR_TOKEN_HERE"
+```
+
+## 延迟任务命名规则
+
+主题会按任务目标字符串识别 IPv4/IPv6 和 Ping/TCP Ping：
+
+```txt
+sh-cu-v4.ip.zstaticcdn.com:80
+城市-运营商-v4/v6.ip.域名:端口
+```
+
+规则：
+
+```txt
+v4 = IPv4
+v6 = IPv6
+有 :端口 = TCP Ping
+没有 :端口 = Ping
+ct = 电信
+cu = 联通
+cm = 移动
+```
+
+首页 VPS 卡片默认只显示 IPv4 TCP Ping；实例详情页会按 IPv4 Ping、IPv6 Ping、IPv4 TCP Ping、IPv6 TCP Ping 分块展示，没有数据的区块不会显示。
+
+## 开发
+
+```bash
 npm install
 npm run dev
 ```
@@ -117,65 +106,25 @@ npm run dev
 ## 构建
 
 ```bash
+npm run typecheck
 npm run build
 ```
 
-构建产物在：
+构建后：
 
 ```txt
-dist
-```
-
-## 手动部署
-
-不想用一键部署的话，也可以自己部署。
-
-Cloudflare Workers：
-
-```bash
-npm install
-npm run build
-npx wrangler deploy
-```
-
-Vercel：
-
-```txt
-Build command: npm run build
-Output directory: dist
+dist/                 静态主题分发目录
+dist/nodeget-theme.zip  自动生成的主题 zip 包
 ```
 
 ## 自定义
-
-常用文件：
-
-```txt
-src/styles/global.css
-src/components/Background.tsx
-src/components/NodeCard.tsx
-src/components/Footer.tsx
-```
-
-预留文件：
 
 ```txt
 public/custom.css
 public/custom.js
 ```
 
-## 链接
-
-主题仓库：
-
-```txt
-https://github.com/3257085208/NIE-Theme-NodeGet
-```
-
-NodeGet：
-
-```txt
-https://github.com/NodeSeekDev/NodeGet
-```
+这两个文件会进入最终主题包，方便用户在 NodeGet 控制面板导入后继续做轻量自定义。
 
 ## License
 

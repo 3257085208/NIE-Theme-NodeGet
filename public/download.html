@@ -3,20 +3,125 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>下载当前 NodeGet 主题</title>
+  <title>Download NodeGet Theme</title>
   <style>
-    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f6f8fb;color:#1f2a44;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    .card{width:min(92vw,440px);padding:28px;border:1px solid #d9e2ef;border-radius:20px;background:#fff;box-shadow:0 18px 45px rgba(30,58,138,.08)}
-    h1{font-size:22px;margin:0 0 10px}
-    p{font-size:14px;line-height:1.8;color:#64748b}
-    a{display:inline-flex;margin-top:14px;padding:11px 16px;border-radius:12px;background:#2fa06f;color:white;text-decoration:none;font-weight:700}
+    :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f5f8fb; color: #13233a; }
+    main { width: min(560px, calc(100vw - 32px)); border: 1px solid rgba(148, 163, 184, .35); border-radius: 24px; padding: 28px; background: rgba(255,255,255,.88); box-shadow: 0 24px 80px rgba(15, 23, 42, .12); }
+    h1 { margin: 0 0 10px; font-size: 24px; }
+    p { line-height: 1.8; color: #52647a; }
+    button { appearance: none; border: 0; border-radius: 14px; padding: 12px 18px; font-weight: 800; cursor: pointer; background: #24a56a; color: white; box-shadow: 0 12px 28px rgba(36, 165, 106, .28); }
+    button:disabled { opacity: .65; cursor: wait; }
+    code { background: rgba(148, 163, 184, .18); padding: 2px 6px; border-radius: 8px; }
+    #log { margin-top: 18px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; white-space: pre-wrap; color: #64748b; }
+    @media (prefers-color-scheme: dark) { body { background: #0f172a; color: #e2e8f0; } main { background: rgba(15,23,42,.86); border-color: rgba(148, 163, 184, .22); } p, #log { color: #94a3b8; } }
   </style>
 </head>
 <body>
-  <main class="card">
-    <h1>下载当前主题包</h1>
-    <p>这个文件由构建脚本自动生成，包含当前 dist 目录中的前端主题文件，可用于 NodeGet 新主题框架。</p>
-    <a href="./NodeGet-StatusShow.zip" download>下载 NodeGet-StatusShow.zip</a>
+  <main>
+    <h1>NodeGet 主题下载</h1>
+    <p>此页面会读取 <code>nodeget-theme-files.json</code>，把当前分发站点上的主题文件打包为一个 zip，方便导入 NodeGet 控制面板。</p>
+    <button id="download">下载主题 zip</button>
+    <div id="log"></div>
   </main>
+
+  <script>
+    const log = document.querySelector('#log')
+    const button = document.querySelector('#download')
+    const encoder = new TextEncoder()
+
+    function write(msg) { log.textContent = msg }
+    function u16(n) { return [n & 255, (n >>> 8) & 255] }
+    function u32(n) { return [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255] }
+
+    const crcTable = (() => {
+      const table = new Uint32Array(256)
+      for (let i = 0; i < 256; i++) {
+        let c = i
+        for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
+        table[i] = c >>> 0
+      }
+      return table
+    })()
+
+    function crc32(bytes) {
+      let c = 0xffffffff
+      for (const b of bytes) c = crcTable[(c ^ b) & 255] ^ (c >>> 8)
+      return (c ^ 0xffffffff) >>> 0
+    }
+
+    function zipStore(files) {
+      const chunks = []
+      const central = []
+      let offset = 0
+      for (const file of files) {
+        const name = encoder.encode(file.name.replace(/^\/+/, ''))
+        const data = file.data
+        const crc = crc32(data)
+        const local = new Uint8Array([
+          ...u32(0x04034b50), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0),
+          ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(name.length), ...u16(0),
+        ])
+        chunks.push(local, name, data)
+        central.push({ name, crc, size: data.length, offset })
+        offset += local.length + name.length + data.length
+      }
+
+      const cdStart = offset
+      for (const file of central) {
+        const head = new Uint8Array([
+          ...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0),
+          ...u32(file.crc), ...u32(file.size), ...u32(file.size), ...u16(file.name.length), ...u16(0), ...u16(0),
+          ...u16(0), ...u16(0), ...u32(0), ...u32(file.offset),
+        ])
+        chunks.push(head, file.name)
+        offset += head.length + file.name.length
+      }
+      const cdSize = offset - cdStart
+      chunks.push(new Uint8Array([
+        ...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(central.length), ...u16(central.length),
+        ...u32(cdSize), ...u32(cdStart), ...u16(0),
+      ]))
+      return new Blob(chunks, { type: 'application/zip' })
+    }
+
+    async function readFileList() {
+      const res = await fetch('./nodeget-theme-files.json', { cache: 'no-store' })
+      if (!res.ok) throw new Error('nodeget-theme-files.json 加载失败：' + res.status)
+      const json = await res.json()
+      const files = Array.isArray(json) ? json : Array.isArray(json.files) ? json.files : []
+      return files.map(item => typeof item === 'string' ? item : item.path || item.name).filter(Boolean)
+    }
+
+    async function downloadTheme() {
+      button.disabled = true
+      try {
+        write('读取文件列表...')
+        const names = await readFileList()
+        const files = []
+        for (let i = 0; i < names.length; i++) {
+          const name = names[i].replace(/^\/+/, '')
+          write(`下载 ${i + 1}/${names.length}: ${name}`)
+          const res = await fetch('./' + name, { cache: 'no-store' })
+          if (!res.ok) throw new Error(`${name} 加载失败：${res.status}`)
+          files.push({ name, data: new Uint8Array(await res.arrayBuffer()) })
+        }
+        write('正在打包 zip...')
+        const blob = zipStore(files)
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = 'nodeget-theme.zip'
+        a.click()
+        setTimeout(() => URL.revokeObjectURL(a.href), 3000)
+        write(`完成：${files.length} 个文件`)
+      } catch (error) {
+        write(error instanceof Error ? error.message : String(error))
+      } finally {
+        button.disabled = false
+      }
+    }
+
+    button.addEventListener('click', downloadTheme)
+  </script>
 </body>
 </html>
