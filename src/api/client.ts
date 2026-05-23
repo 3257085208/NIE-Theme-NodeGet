@@ -224,7 +224,6 @@ export class RpcClient {
     try {
       ws?.close()
     } catch {
-      // ignore stale socket close failures
     }
     this.connect()
   }

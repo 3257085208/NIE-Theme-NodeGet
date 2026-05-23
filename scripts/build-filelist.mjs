@@ -29,8 +29,5 @@ let files = walk(dist).filter(Boolean).sort((a, b) => a.localeCompare(b))
 if (!files.includes(manifest)) files.push(manifest)
 files = [...new Set(files)].sort((a, b) => a.localeCompare(b))
 
-// NodeGet 控制面板读取的 nodeget-theme-files.json 需要是“字符串数组”，
-// 官方示例脚本也是直接输出数组，而不是 { files: [...] }。
-// 如果输出对象，远程导入可能成功，但预览静态 Bucket 里没有正确写入 index.html，导致 File not found。
 writeFileSync(resolve(dist, manifest), JSON.stringify(files, null, 2) + '\n')
 console.log(`[build-filelist] wrote ${files.length} files to dist/${manifest}`)

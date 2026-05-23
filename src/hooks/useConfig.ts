@@ -23,7 +23,6 @@ function normalizeTokens(value: unknown): SiteToken[] {
       const obj = asObject(item)
       return {
         name: asString(obj.name, `master-${index + 1}`),
-        // NodeGet 主题开发文档示例里是 websocket，官方 StatusShow 新版是 backend_url；两种都兼容。
         backend_url: asString(obj.backend_url ?? obj.websocket ?? obj.ws ?? obj.url),
         token: asString(obj.token),
       }
@@ -34,7 +33,6 @@ function normalizeTokens(value: unknown): SiteToken[] {
 function readPrefsFromObject(obj: RawObject): SiteUserPreferences {
   const prefs: SiteUserPreferences = {}
   if (typeof obj.site_name === 'string') prefs.site_name = obj.site_name
-  // 兼容文档里的 site_log 拼写、常见 logo 别名，以及官方新版的 site_logo。
   if (typeof obj.site_logo === 'string') prefs.site_logo = obj.site_logo
   if (typeof obj.site_log === 'string') prefs.site_logo = obj.site_log
   if (typeof obj.logo === 'string') prefs.site_logo = obj.logo
@@ -50,14 +48,6 @@ function readRawPrefs(obj: RawObject): SiteUserPreferences {
   const themeConfig = asObject(obj.theme_config)
   const themeConfigUserPreferences = asObject(themeConfig.user_preferences)
 
-  // 兼容两套配置结构：
-  // 1. NodeGet 规范主题：config.json -> user_preferences
-  // 2. 旧/第三方主题常见结构：config.json -> site_name/site_log/theme_config
-  //
-  // 注意：后台“用户配置”通常只改 user_preferences，旧版构建脚本可能还会留下
-  // 顶层 site_name/site_logo 这些兼容字段。如果顶层旧值优先，就会把后台新配置覆盖掉。
-  // 所以这里必须让 user_preferences 优先级最高，HudsonStatus 这类主题也是只依赖
-  // config.json 里的 user_preferences 来更新站点名和 Logo。
   return {
     ...readPrefsFromObject(obj),
     ...readPrefsFromObject(themeConfig),
@@ -97,7 +87,6 @@ function normalizeConfig(userRaw: unknown, themeRaw?: unknown): SiteConfig {
     ...(themeObj as Partial<SiteConfig>),
     ...(userObj as Partial<SiteConfig>),
     user_preferences: userPreferences,
-    // 同步写回旧字段，避免组件或后续扩展读旧字段时拿不到新配置。
     site_name: siteName,
     site_logo: siteLogo,
     site_log: siteLogo,

@@ -25,9 +25,7 @@ export function ValueSidebar({ nodes }: Props) {
   const exchange = useCnyExchangeRates(billable.map(node => node.meta.priceUnit))
   const monthlyCny = billable.reduce((sum, node) => sum + monthlyCostCny(node.meta, exchange.rates), 0)
   const remainingCny = billable.reduce((sum, node) => sum + remainingValueCny(node.meta, exchange.rates), 0)
-  const rateLabel = exchange.status === 'live'
-    ? `实时汇率${exchange.updatedAt ? ` · ${new Date(exchange.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}`
-    : '接口失败，使用内置汇率'
+  const currencyLabel = exchange.status === 'live' ? 'CNY' : 'CNY*'
 
   return (
     <>
@@ -42,7 +40,7 @@ export function ValueSidebar({ nodes }: Props) {
             <Coins className="h-4 w-4 text-primary" />
             <div>
               <div className="text-sm font-bold">剩余价值统计</div>
-              <div className="text-xs text-muted-foreground">按 CNY 统计 · {rateLabel}</div>
+              <div className="text-xs text-muted-foreground">{currencyLabel}</div>
             </div>
           </div>
           <div className="rounded-lg border border-dashed border-border px-3 py-3">
@@ -56,7 +54,7 @@ export function ValueSidebar({ nodes }: Props) {
             </div>
             {(exchange.loading || exchange.error) && (
               <div className="mt-2 text-[11px] text-muted-foreground">
-                {exchange.loading ? '正在刷新汇率…' : exchange.error}
+                {exchange.loading ? '更新中…' : '内置汇率'}
               </div>
             )}
           </div>

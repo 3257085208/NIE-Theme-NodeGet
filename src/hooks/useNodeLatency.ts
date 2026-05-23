@@ -79,8 +79,6 @@ export async function fetchLatencyRows(
     const now = Date.now()
     const window: [number, number] = [now - windowMs, now]
 
-    // NodeGet 的 task_query 需要带 type 条件，否则部分后端不会返回 ping/tcp_ping 任务数据。
-    // IPv4/IPv6 再由 cron_source / 任务目标里的 v4、v6 字段区分。
     return clean(
       await taskQuery(
         client,
