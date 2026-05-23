@@ -23,14 +23,33 @@ export function NodeCard({ node, pool }: { node: Node; pool: BackendPool | null 
   const logo = distroLogo(node)
   const virt = virtLabel(node)
   const cpu = cpuLabel(node)
-  const { ref, visible } = useInViewport<HTMLAnchorElement>({ rootMargin: '320px 0px' })
+  const { ref, visible } = useInViewport<HTMLDivElement>({ rootMargin: '320px 0px' })
   const { tcpData, loading: tcpLoading, error: tcpError } = useNodeTcpLatency(pool, node.source, node.uuid, {
     enabled: visible && node.online,
     refreshMs: 60_000,
     priority: visible ? 'high' : 'normal',
   })
+  const detailHash = `#${encodeURIComponent(nodeKey(node))}`
+
   return (
-    <a ref={ref} href={`#${encodeURIComponent(nodeKey(node))}`} className="block h-full">
+    <div
+      ref={ref}
+      role="link"
+      tabIndex={0}
+      className="block h-full cursor-pointer rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+      onClick={event => {
+        const target = event.target as HTMLElement
+        if (target.closest('[data-card-action="true"]')) return
+        window.location.hash = detailHash
+      }}
+      onKeyDown={event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return
+        const target = event.target as HTMLElement
+        if (target.closest('[data-card-action="true"]')) return
+        event.preventDefault()
+        window.location.hash = detailHash
+      }}
+    >
       <Card
         className={cn(
           'group node-card-hover h-full min-h-[360px] sm:min-h-[430px] p-4 sm:p-5 transition-[border-color,box-shadow,opacity,background-color] duration-200 hover:border-primary/90 hover:bg-card flex flex-col gap-3.5 sm:gap-4',
@@ -95,7 +114,7 @@ export function NodeCard({ node, pool }: { node: Node; pool: BackendPool | null 
           </div>
         )}
       </Card>
-    </a>
+    </div>
   )
 }
 

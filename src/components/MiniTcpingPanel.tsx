@@ -55,13 +55,25 @@ export function MiniTcpingPanel({ node, tcpData, loading = false, error = null, 
           {canToggle && (
             <button
               type="button"
+              data-card-action="true"
               onClick={e => {
+                e.preventDefault()
                 e.stopPropagation()
                 setExpanded(v => !v)
               }}
-              onMouseDown={e => e.stopPropagation()}
-              onTouchStart={e => e.stopPropagation()}
-              className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+              onMouseDown={e => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onPointerDown={e => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onTouchStart={e => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              className="relative z-10 inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
               title={expanded ? '收起延迟监控' : `展开全部 ${series.length} 个 IPv4 TCPing 监控`}
               aria-label={expanded ? '收起延迟监控' : '展开全部延迟监控'}
             >
@@ -134,7 +146,7 @@ function summarizeTcping(rows: TaskQueryResult[]): SeriesSummary[] {
     windowMs: MINI_WINDOW_MS,
     bucketMs: MINI_BUCKET_MS,
     buckets: SEGMENTS,
-    includeCurrentBucket: true,
+    includeCurrentBucket: false,
   }, 'ipv4')
     .filter(row => row.values.some(v => v !== undefined))
     .map(row => ({
