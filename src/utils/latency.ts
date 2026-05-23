@@ -233,7 +233,12 @@ export function filterLatencyRowsByFamilyAndType(
   return rows.filter(row => {
     const target = latencyRowTarget(row)
     if (target) return target.family === family && target.protocol === type
-    return latencyRowFamily(row) === family
+
+    // 兼容旧数据：如果后端返回了 type 查询结果，但任务源里没有 v4/v6 标记，
+    // 只把它当作 IPv4 展示；IPv6 必须明确带 v6。
+    const rowFamily = latencyRowFamily(row)
+    if (rowFamily) return rowFamily === family
+    return family === 'ipv4'
   })
 }
 

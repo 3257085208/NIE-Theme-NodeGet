@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { taskQuery } from '../api/methods'
-import { latencyRowProtocol, latencyRowTarget, normalizeTs } from '../utils/latency'
+import { latencyRowTarget, normalizeTs } from '../utils/latency'
 import type { RpcClient } from '../api/client'
 import type { BackendPool } from '../api/pool'
 import type { LatencyType, TaskQueryResult } from '../types'
@@ -9,7 +9,7 @@ const WINDOW_MS = 60 * 60 * 1000
 const REFRESH_MS = 120_000
 const QUERY_TIMEOUT_MS = 20_000
 const CACHE_LIMIT = 1200
-const QUERY_LIMIT = 2000
+const QUERY_LIMIT = 1000
 
 export interface LatencyQueryState {
   pingData: TaskQueryResult[]
@@ -71,27 +71,30 @@ export async function fetchLatencyRows(
   timeoutMs = QUERY_TIMEOUT_MS,
   windowMs = WINDOW_MS,
 ) {
-  const key = `${clientKey(client)}::${uuid}::all-latency::${windowMs}`
+  const key = `${clientKey(client)}::${uuid}::${type}::${windowMs}`
   const existing = latencyInflight.get(key)
-  const request = existing ?? (async () => {
+  if (existing) return existing
+
+  const request = (async () => {
     const now = Date.now()
     const window: [number, number] = [now - windowMs, now]
 
+    // NodeGet 的 task_query 需要带 type 条件，否则部分后端不会返回 ping/tcp_ping 任务数据。
+    // IPv4/IPv6 再由 cron_source / 任务目标里的 v4、v6 字段区分。
     return clean(
       await taskQuery(
         client,
-        [{ uuid }, { timestamp_from_to: window }, { limit: QUERY_LIMIT }],
+        [{ uuid }, { timestamp_from_to: window }, { type }, { limit: QUERY_LIMIT }],
         timeoutMs,
       ),
     )
   })()
 
-  if (!existing) latencyInflight.set(key, request)
+  latencyInflight.set(key, request)
   try {
-    const rows = await request
-    return rows.filter(row => latencyRowProtocol(row) === type)
+    return await request
   } finally {
-    if (!existing && latencyInflight.get(key) === request) latencyInflight.delete(key)
+    if (latencyInflight.get(key) === request) latencyInflight.delete(key)
   }
 }
 
