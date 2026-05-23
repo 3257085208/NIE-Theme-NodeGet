@@ -243,7 +243,7 @@ export function App() {
     )
   }
 
-  const logo = config.site_logo || DEFAULT_LOGO
+  const logo = config.user_preferences.site_logo || DEFAULT_LOGO
 
   const content = (
     <>
@@ -294,7 +294,7 @@ export function App() {
       <Background settings={backgroundSettings} />
       <div className="relative z-10 min-h-screen flex flex-col">
         <Navbar
-          siteName={config.site_name || '你没设置'}
+          siteName={config.user_preferences.site_name || '你没设置'}
           logo={logo}
           query={query}
           onQuery={setQuery}
@@ -336,7 +336,7 @@ export function App() {
           </div>
         </main>
 
-        <Footer text={config.footer} />
+        <Footer text={config.user_preferences.footer} repo={config.repository} dist_page={config.dist_page}/>
 
         <NodeDetail
           node={selectedNode}

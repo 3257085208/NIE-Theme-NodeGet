@@ -1,3 +1,47 @@
+export interface HistorySample {
+  t: number
+  online: boolean
+  rate?: number | null  // 桶内在线率 0-1，仅 fetchUptimeHistory 返回
+  cpu: number | null
+  mem: number | null
+  disk: number | null
+  netIn: number
+  netOut: number
+}
+
+export interface TcpPingRecord {
+  t: number
+  cron: string
+  latency: number | null // null = 超时/丢包
+}
+
+export interface Node {
+  uuid: string
+  source: string
+  online: boolean
+  meta: NodeMeta
+  static: StaticData
+  dynamic: DynamicSummary | null
+  history: HistorySample[]
+  tcpPings: TcpPingRecord[]
+}
+
+
+export interface Usage {
+  cpu?: number
+  mem?: number
+  memUsed: number
+  memTotal: number
+  disk?: number
+  diskUsed: number
+  diskTotal: number
+  netIn?: number
+  netOut?: number
+  uptime?: number
+  ts?: number
+}
+
+
 export interface NodeMeta {
   name: string
   region: string
@@ -133,12 +177,59 @@ export interface Node {
   history: HistorySample[]
 }
 
-export interface SiteConfig {
-  site_name?: string
-  site_logo?: string
-  footer?: string
-  refresh_interval_ms?: number
-  site_tokens: { name: string; backend_url: string; token: string }[]
+export interface ThemeConfig {
+  "name": string
+  "description":string
+  "author"?: string
+  "repository"?: string
+  "dist_page"?: string;
+  "user_preferences_form":{
+    version:string,
+    items:any[]
+  },
+  "version"?: string
+  "license"?: string
+}
+
+export interface UserConfig {
+  "user_preferences":{
+    site_name?: string
+    site_logo?: string
+    footer?: string
+  },
+  site_tokens: { 
+    name: string; 
+    backend_url: string; 
+    token: string 
+  }[]
+}
+
+export type SiteConfig = ThemeConfig & UserConfig
+
+// export interface TaskQueryResult {
+//   task_id: number
+//   timestamp: number
+//   uuid: string
+//   success: boolean
+//   error_message?: string | null
+//   cron_source?: string
+//   task_event_type?: Record<string, string>
+//   task_event_result: Record<string, unknown> | null
+// }
+
+export interface TaskQueryCondition {
+  task_id?: number
+  uuid?: string
+  timestamp_from_to?: [number, number]
+  timestamp_from?: number
+  timestamp_to?: number
+  is_success?: boolean
+  is_failure?: boolean
+  is_running?: boolean
+  type?: string
+  cron_source?: string
+  limit?: number
+  last?: null
 }
 
 export interface TaskQueryResult {

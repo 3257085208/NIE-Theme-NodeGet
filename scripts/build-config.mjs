@@ -1,9 +1,9 @@
 import { writeFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import themeTemplate from '../nodeget-theme.json' with { type: 'json' }
+import { buildConfig } from "../config/index.mjs"
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const out = resolve(root, 'public/config.json')
 
 function parseSite(raw) {
   const out = {}

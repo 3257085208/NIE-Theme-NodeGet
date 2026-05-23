@@ -1,0 +1,36 @@
+{
+  "name": "NIE-Theme",
+  "short": "NIE-Theme",
+  "description": "一款基于 React + Tailwind CSS 开发的服务器状态探针前端。支持卡片/表格视图切换、3D 节点分布地图，以及详细的 CPU/内存/网络流向监控",
+  "author": "3257085208",
+  "repository": "https://github.com/3257085208/NIE-Theme-NodeGet",
+  "dist_page": "",
+  "user_preferences_form": {
+    "version": "0.0.1",
+    "items": [
+      {
+        "key": "site_name",
+        "name": "站点标题",
+        "type": "string",
+        "default": "NodeGet Status",
+        "help": "输入站点标题"
+      },
+      {
+        "key": "site_logo",
+        "name": "站点图标",
+        "type": "string",
+        "default": "/n-logo.svg",
+        "help": "输入站点图标链接，留空则使用默认"
+      },
+      {
+        "key": "footer",
+        "name": "页脚文本",
+        "type": "string",
+        "default": "Powered by NodeGet",
+        "help": "输入页脚文本"
+      }
+    ]
+  },
+  "version": "will be auto filled using version in package.json",
+  "license": ""
+}
