@@ -353,7 +353,7 @@ export function extractLatencyValue(row: TaskQueryResult, type: LatencyType, fam
 
 export function latencySeriesName(row: TaskQueryResult, type?: LatencyType) {
   const target = latencyRowTarget(row)?.target
-  const name = row.cron_source || target || (type === 'tcp_ping' ? 'TCP Ping' : type === 'ping' ? 'Ping' : '未知')
+  const name = target || row.cron_source || (type === 'tcp_ping' ? 'TCP Ping' : type === 'ping' ? 'Ping' : '未知')
   return name.trim() || '未知'
 }
 

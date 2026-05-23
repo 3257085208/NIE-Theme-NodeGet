@@ -1,4 +1,4 @@
-# NIE Theme NodeGet v1.4.6 Rounded - All-in-One Deploy Package
+# NIE Theme NodeGet v1.4.7 Rounded - All-in-One Deploy Package
 
 这个压缩包保留两种部署方式，不是单独的导入包，也不是单独的源码包。
 

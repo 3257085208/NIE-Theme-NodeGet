@@ -26,6 +26,7 @@ import {
   filterLatencyRowsByFamilyAndType,
   qualitySegmentColor,
   latencySegmentHeight,
+  latencyTargetDisplayLabel,
   type LatencyFamily,
   type LatencyQualityRow,
 } from '../utils/latency'
@@ -498,6 +499,7 @@ function LatencyQualityView({
   onToggle: () => void
 }) {
   const { name, color, avg, jitter, lossRate, values } = row
+  const label = latencyTargetDisplayLabel(name) || name
 
   if (compact) {
     return (
@@ -510,7 +512,7 @@ function LatencyQualityView({
       >
         <div className="flex items-center gap-2">
           <span className="inline-block h-0.5 w-4 rounded-full shrink-0" style={{ background: color }} />
-          <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
+          <span className="min-w-0 flex-1 truncate font-medium" title={name}>{label}</span>
           <span className="tabular-nums text-foreground/90 font-semibold">{avg != null ? ms(avg) : '—'}</span>
         </div>
         <div className="mt-2 flex h-5 items-end gap-[1px] overflow-hidden rounded-none bg-transparent px-0 py-0 shadow-none">
@@ -540,7 +542,7 @@ function LatencyQualityView({
     >
       <span className="flex items-center gap-2 min-w-0">
         <span className="inline-block w-4 h-0.5 rounded-full shrink-0" style={{ background: color }} />
-        <span className="truncate">{name}</span>
+        <span className="truncate" title={name}>{label}</span>
       </span>
       <div className="flex h-5 items-end gap-[1px] overflow-hidden rounded-none bg-transparent px-0 py-0 shadow-none">
         {values.map((v, i) => (
