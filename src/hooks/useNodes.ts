@@ -69,6 +69,7 @@ const DEFAULT_DYN_INTERVAL_MS = 2_000
 const MIN_DYN_INTERVAL_MS = 1_000
 const MAX_DYN_INTERVAL_MS = 60_000
 const HIDDEN_DYN_INTERVAL_MS = 60_000
+const RESUME_REFRESH_THROTTLE_MS = 1_500
 const LIVE_HISTORY_LIMIT = 180
 const META_CACHE_KEY = 'nodeget.meta.cache.v2'
 
@@ -309,8 +310,11 @@ export function useNodes(config: SiteConfig | null) {
     const metaCache = loadMetaCache()
     const dynamicIntervalMs = normalizeRefreshInterval(config.refresh_interval_ms)
     let dynamicInFlight = false
+    let dynamicRequestSeq = 0
     let stopped = false
     let dynTimer: number | null = null
+    let lastResumeRefreshAt = 0
+    let bootstrapped = false
 
     const applyMetaAndStatic = async (entry: BackendPool['entries'][number], uuids: string[]) => {
       if (!uuids.length) return
@@ -360,8 +364,9 @@ export function useNodes(config: SiteConfig | null) {
       if (stat.status === 'rejected') setErrors(prev => [...prev, { source: entry.name, error: stat.reason }])
     }
 
-    const tickDynamic = async () => {
-      if (stopped || dynamicInFlight) return
+    const tickDynamic = async (force = false) => {
+      if (stopped || (dynamicInFlight && !force)) return
+      const requestSeq = ++dynamicRequestSeq
       dynamicInFlight = true
       const updates: DynamicUpdate[] = []
       try {
@@ -387,7 +392,7 @@ export function useNodes(config: SiteConfig | null) {
             }
           } catch {}
         }))
-        if (!updates.length || stopped) return
+        if (!updates.length || stopped || requestSeq !== dynamicRequestSeq) return
         setLive(prev => {
           const next = new Map(prev)
           for (const { source, row } of updates) {
@@ -408,7 +413,7 @@ export function useNodes(config: SiteConfig | null) {
           })
         }
       } finally {
-        dynamicInFlight = false
+        if (requestSeq === dynamicRequestSeq) dynamicInFlight = false
       }
     }
 
@@ -441,6 +446,7 @@ export function useNodes(config: SiteConfig | null) {
       setAgents(seed)
       const metaAndStatic = Promise.all(pool.entries.map(entry => applyMetaAndStatic(entry, sourceUuids.get(entry.name) || [])))
       await tickDynamic()
+      bootstrapped = true
       setLoading(false)
       scheduleDynamicTick()
       void metaAndStatic.catch((e: unknown) => setErrors(prev => [...prev, { source: '*', error: e }]))
@@ -451,21 +457,38 @@ export function useNodes(config: SiteConfig | null) {
       setLoading(false)
     })
 
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') {
-        clearDynamicTimer()
-        void tickDynamic().finally(scheduleDynamicTick)
-      } else {
+    const resumeRefresh = () => {
+      if (!bootstrapped || document.visibilityState !== 'visible') return
+      const now = Date.now()
+      if (now - lastResumeRefreshAt < RESUME_REFRESH_THROTTLE_MS) return
+      lastResumeRefreshAt = now
+      clearDynamicTimer()
+      for (const entry of pool.entries) entry.client.reconnect('resume refresh')
+      void tickDynamic(true).finally(() => {
+        setTick(t => t + 1)
         scheduleDynamicTick()
-      }
+      })
     }
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') resumeRefresh()
+      else scheduleDynamicTick()
+    }
+
     document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', resumeRefresh)
+    window.addEventListener('online', resumeRefresh)
+    window.addEventListener('pageshow', resumeRefresh)
+
     const clockTimer = window.setInterval(() => setTick(t => t + 1), 5000)
     return () => {
       stopped = true
       clearDynamicTimer()
       window.clearInterval(clockTimer)
       document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', resumeRefresh)
+      window.removeEventListener('online', resumeRefresh)
+      window.removeEventListener('pageshow', resumeRefresh)
       setPool(null)
       pool.close()
     }

@@ -70,10 +70,11 @@ export async function fetchLatencyRows(
   type: LatencyType,
   timeoutMs = QUERY_TIMEOUT_MS,
   windowMs = WINDOW_MS,
+  force = false,
 ) {
   const key = `${clientKey(client)}::${uuid}::${type}::${windowMs}`
   const existing = latencyInflight.get(key)
-  if (existing) return existing
+  if (existing && !force) return existing
 
   const request = (async () => {
     const now = Date.now()
@@ -117,12 +118,12 @@ export function useNodeLatency(
 
     let cancelled = false
 
-    const fetchOnce = async () => {
+    const fetchOnce = async (force = false) => {
       setLoading(true)
 
       const [ping, tcp] = await Promise.allSettled([
-        fetchLatencyRows(entry.client, uuid, 'ping'),
-        fetchLatencyRows(entry.client, uuid, 'tcp_ping'),
+        fetchLatencyRows(entry.client, uuid, 'ping', QUERY_TIMEOUT_MS, WINDOW_MS, force),
+        fetchLatencyRows(entry.client, uuid, 'tcp_ping', QUERY_TIMEOUT_MS, WINDOW_MS, force),
       ])
 
       if (cancelled) return
@@ -148,8 +149,8 @@ export function useNodeLatency(
 
     const refetchAfterWake = () => {
       if (document.visibilityState !== 'visible') return
-      entry.client.reconnect('页面恢复可见，刷新延迟连接')
-      fetchOnce()
+      entry.client.reconnect('resume latency refresh')
+      fetchOnce(true)
     }
 
     const timer = setInterval(() => {
@@ -158,6 +159,7 @@ export function useNodeLatency(
     document.addEventListener('visibilitychange', refetchAfterWake)
     window.addEventListener('focus', refetchAfterWake)
     window.addEventListener('online', refetchAfterWake)
+    window.addEventListener('pageshow', refetchAfterWake)
 
     return () => {
       cancelled = true
@@ -165,6 +167,7 @@ export function useNodeLatency(
       document.removeEventListener('visibilitychange', refetchAfterWake)
       window.removeEventListener('focus', refetchAfterWake)
       window.removeEventListener('online', refetchAfterWake)
+      window.removeEventListener('pageshow', refetchAfterWake)
     }
   }, [pool, source, uuid])
 

@@ -7,7 +7,7 @@ const DEFAULT_REFRESH_MS = 60_000
 const ERROR_RETRY_MS = 30_000
 const QUERY_TIMEOUT_MS = 12_000
 const AVAILABILITY_WINDOW_MS = 4 * 60 * 60 * 1000
-const MAX_CONCURRENT = 3
+const MAX_CONCURRENT = 8
 
 type Priority = 'high' | 'normal'
 
@@ -131,7 +131,7 @@ function drainQueue() {
       })
 
       try {
-        const rows = await fetchLatencyRows(entry.client, next.uuid, 'tcp_ping', QUERY_TIMEOUT_MS, next.windowMs)
+        const rows = await fetchLatencyRows(entry.client, next.uuid, 'tcp_ping', QUERY_TIMEOUT_MS, next.windowMs, Boolean(next.force))
         setLatencyCache(next.source, next.uuid, 'tcp_ping', rows)
         updateState(key, {
           tcpData: getLatencyCache(next.source, next.uuid, 'tcp_ping', next.windowMs),
@@ -219,7 +219,7 @@ export function useNodeTcpLatency(
     const onWake = () => {
       if (document.visibilityState !== 'visible') return
       const entry = pool.entries.find(e => e.name === source)
-      entry?.client.reconnect('页面恢复可见，刷新 TCPing 连接')
+      entry?.client.reconnect('resume tcping refresh')
       triggerFetch('high', true)
     }
 
@@ -230,6 +230,7 @@ export function useNodeTcpLatency(
     document.addEventListener('visibilitychange', onWake)
     window.addEventListener('focus', onWake)
     window.addEventListener('online', onWake)
+    window.addEventListener('pageshow', onWake)
 
     return () => {
       unsubscribe()
@@ -237,6 +238,7 @@ export function useNodeTcpLatency(
       document.removeEventListener('visibilitychange', onWake)
       window.removeEventListener('focus', onWake)
       window.removeEventListener('online', onWake)
+      window.removeEventListener('pageshow', onWake)
     }
   }, [pool, source, uuid, currentKey, enabled, refreshMs, priority, windowMs])
 
