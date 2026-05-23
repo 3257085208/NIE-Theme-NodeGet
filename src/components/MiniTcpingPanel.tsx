@@ -1,5 +1,5 @@
-import { Activity, ChevronDown } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Activity } from 'lucide-react'
+import { useMemo } from 'react'
 import { cn } from '../utils/cn'
 import {
   buildLatencyQualityRows,
@@ -37,78 +37,24 @@ interface SeriesSummary {
 
 export function MiniTcpingPanel({ node, tcpData, loading = false, error = null, compact = false }: Props) {
   const series = useMemo(() => summarizeTcping(tcpData), [tcpData])
-  const collapsedSeries = useMemo(() => pickCollapsedTcpingSeries(series), [series])
-  const [expanded, setExpanded] = useState(false)
 
   if (series.length === 0) return null
-
-  const canToggle = series.length > collapsedSeries.length
-  const visibleSeries = canToggle && !expanded ? collapsedSeries : series
 
   return (
     <div className="rounded-xl border border-dashed border-border/80 bg-transparent px-3 py-3 sm:px-4 sm:py-3.5 mt-1">
       <div className="mb-2.5 sm:mb-3 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
         <Activity className="h-3.5 w-3.5 text-primary" />
         <span>IPv4 TCPing</span>
-        <div className="ml-auto flex items-center gap-1.5">
-          {loading && <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
-          {canToggle && (
-            <button
-              type="button"
-              data-card-action="true"
-              onClick={e => {
-                e.preventDefault()
-                e.stopPropagation()
-                setExpanded(v => !v)
-              }}
-              onMouseDown={e => {
-                e.preventDefault()
-                e.stopPropagation()
-              }}
-              onPointerDown={e => {
-                e.preventDefault()
-                e.stopPropagation()
-              }}
-              onTouchStart={e => {
-                e.preventDefault()
-                e.stopPropagation()
-              }}
-              className="relative z-10 inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-              title={expanded ? '收起延迟监控' : `展开全部 ${series.length} 个 IPv4 TCPing 监控`}
-              aria-label={expanded ? '收起延迟监控' : '展开全部延迟监控'}
-            >
-              <span>{expanded ? '收起' : '全部'}</span>
-              <ChevronDown className={cn('h-3 w-3 transition-transform', expanded && 'rotate-180')} />
-            </button>
-          )}
-        </div>
+        {loading && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
       </div>
 
       <div className="space-y-2 sm:space-y-2.5">
-        {visibleSeries.map(item => (
+        {series.map(item => (
           <TcpingRow key={item.name} item={item} />
         ))}
       </div>
     </div>
   )
-}
-
-
-function pickCollapsedTcpingSeries(series: SeriesSummary[]) {
-  if (series.length <= 3) return series
-
-  const picked: SeriesSummary[] = []
-  for (const provider of NAME_ORDER) {
-    const item = series.find(s => displayProvider(s.name).includes(provider) || s.label.includes(provider))
-    if (item && !picked.some(s => s.name === item.name)) picked.push(item)
-  }
-
-  for (const item of series) {
-    if (picked.length >= 3) break
-    if (!picked.some(s => s.name === item.name)) picked.push(item)
-  }
-
-  return picked.slice(0, 3)
 }
 
 function TcpingRow({ item }: { item: SeriesSummary }) {
