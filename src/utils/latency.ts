@@ -110,6 +110,71 @@ export interface LatencyTargetInfo {
   port: number | null
 }
 
+const LATENCY_CITY_LABELS: Record<string, string> = {
+  ah: '安徽',
+  bj: '北京',
+  cq: '重庆',
+  fj: '福建',
+  gd: '广东',
+  gs: '甘肃',
+  gx: '广西',
+  gz: '贵州',
+  ha: '河南',
+  hb: '湖北',
+  he: '河北',
+  hi: '海南',
+  hk: '香港',
+  hl: '黑龙江',
+  hn: '湖南',
+  jl: '吉林',
+  js: '江苏',
+  jx: '江西',
+  ln: '辽宁',
+  mo: '澳门',
+  nm: '内蒙古',
+  nx: '宁夏',
+  qh: '青海',
+  sc: '四川',
+  sd: '山东',
+  sh: '上海',
+  sn: '陕西',
+  sx: '山西',
+  tj: '天津',
+  tw: '台湾',
+  xj: '新疆',
+  xz: '西藏',
+  yn: '云南',
+  zj: '浙江',
+  cd: '成都',
+  cs: '长沙',
+  dg: '东莞',
+  fs: '佛山',
+  fz: '福州',
+  hz: '杭州',
+  nj: '南京',
+  qd: '青岛',
+  sz: '深圳',
+  wh: '武汉',
+  xa: '西安',
+  xm: '厦门',
+}
+
+export function cityLabelFromCode(code: string | null | undefined) {
+  if (!code) return ''
+  const key = code.toLowerCase()
+  return LATENCY_CITY_LABELS[key] || code.toUpperCase()
+}
+
+export function latencyTargetDisplayLabel(name: string | null | undefined) {
+  const target = parseLatencyTarget(name)
+  if (!target) return ''
+
+  const city = cityLabelFromCode(target.city)
+  const provider = providerLabelFromCode(target.provider)
+  if (city && provider) return `${city}${provider}`
+  return city || provider
+}
+
 const LATENCY_TARGET_RE = /([a-z0-9]+)-([a-z0-9]+)-(v[46])\.ip\.([a-z0-9.-]+)(?::(\d{1,5}))?/i
 
 export function parseLatencyTarget(value: string | null | undefined): LatencyTargetInfo | null {
@@ -296,6 +361,7 @@ export function latencySeriesName(row: TaskQueryResult, type?: LatencyType) {
 export function providerKeyFromSeries(name: string) {
   const target = parseLatencyTarget(name)
   const provider = target?.provider
+  if (target && provider) return `${target.city}-${provider}`
   if (provider === 'ct') return 'telecom'
   if (provider === 'cu') return 'unicom'
   if (provider === 'cm') return 'mobile'
