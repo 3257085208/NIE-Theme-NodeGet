@@ -35,9 +35,106 @@
         "type": "number",
         "default": 10000,
         "help": "动态监控数据刷新间隔，建议 5000-60000"
+      },
+      {
+        "type": "title",
+        "name": "外观设置"
+      },
+      {
+        "key": "background_palette",
+        "name": "背景配色",
+        "type": "select",
+        "options": "cloud,mint,blue,purple,peach,rose,yellow,slate,sea,forest",
+        "default": "cloud",
+        "help": "cloud=云白，mint=薄荷，blue=海盐蓝，purple=紫雾，peach=蜜桃，rose=玫瑰，yellow=奶油黄，slate=曜石，sea=深海，forest=森林"
+      },
+      {
+        "key": "background_pattern",
+        "name": "背景图案",
+        "type": "select",
+        "options": "grid,solid,dots",
+        "default": "grid",
+        "help": "grid=网格，solid=纯色，dots=点状"
+      },
+      {
+        "key": "background_density",
+        "name": "背景纹理密度",
+        "type": "number",
+        "default": 22,
+        "help": "数值越大纹理越疏，建议 12-48"
+      },
+      {
+        "key": "background_opacity",
+        "name": "背景纹理强度",
+        "type": "number",
+        "default": 10,
+        "help": "背景纹理透明度百分比，建议 2-24"
+      },
+      {
+        "type": "title",
+        "name": "首页卡片显示"
+      },
+      {
+        "key": "home_card_metric_style",
+        "name": "首页卡片指标样式",
+        "type": "select",
+        "options": "circle,bar",
+        "default": "circle",
+        "help": "circle=CPU/内存/磁盘圆环，bar=两列四项 18 格横条"
+      },
+      {
+        "key": "home_tcping_include",
+        "name": "首页延迟指定线路",
+        "type": "string",
+        "default": "",
+        "help": "多个用逗号分隔，例如 上海电信,福建电信,上海移动；也可填写 sh-ct,fj-ct,sh-cm；留空显示全部"
+      },
+      {
+        "type": "title",
+        "name": "VPS 详情页资源显示"
+      },
+      {
+        "key": "detail_resource_metric_style",
+        "name": "详情页资源指标样式",
+        "type": "select",
+        "options": "circle,bar",
+        "default": "circle",
+        "help": "circle=CPU/内存/硬盘/Swap 圆环，bar=两列四项 18 格横条"
+      },
+      {
+        "type": "title",
+        "name": "VPS 详情页延迟显示开关"
+      },
+      {
+        "key": "detail_show_ipv4_ping",
+        "name": "详情页显示 IPv4 Ping",
+        "type": "switch",
+        "default": true,
+        "help": "是否在 VPS 详情页显示 IPv4 Ping"
+      },
+      {
+        "key": "detail_show_ipv4_tcping",
+        "name": "详情页显示 IPv4 TCP Ping",
+        "type": "switch",
+        "default": true,
+        "help": "是否在 VPS 详情页显示 IPv4 TCP Ping"
+      },
+      {
+        "key": "detail_show_ipv6_ping",
+        "name": "详情页显示 IPv6 Ping",
+        "type": "switch",
+        "default": true,
+        "help": "是否在 VPS 详情页显示 IPv6 Ping"
+      },
+      {
+        "key": "detail_show_ipv6_tcping",
+        "name": "详情页显示 IPv6 TCP Ping",
+        "type": "switch",
+        "default": true,
+        "help": "是否在 VPS 详情页显示 IPv6 TCP Ping"
       }
     ]
   },
-  "version": "1.4.14",
+  "version": "1.4.22",
   "license": "AGPL-3.0"
 }
