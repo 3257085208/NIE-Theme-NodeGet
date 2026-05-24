@@ -91,6 +91,38 @@
       },
       {
         "type": "title",
+        "name": "首页延迟显示开关"
+      },
+      {
+        "key": "home_show_ipv4_ping",
+        "name": "首页显示 IPv4 Ping",
+        "type": "switch",
+        "default": false,
+        "help": "是否在首页 VPS 卡片中显示 IPv4 Ping"
+      },
+      {
+        "key": "home_show_ipv4_tcping",
+        "name": "首页显示 IPv4 TCP Ping",
+        "type": "switch",
+        "default": true,
+        "help": "是否在首页 VPS 卡片中显示 IPv4 TCP Ping"
+      },
+      {
+        "key": "home_show_ipv6_ping",
+        "name": "首页显示 IPv6 Ping",
+        "type": "switch",
+        "default": false,
+        "help": "是否在首页 VPS 卡片中显示 IPv6 Ping"
+      },
+      {
+        "key": "home_show_ipv6_tcping",
+        "name": "首页显示 IPv6 TCP Ping",
+        "type": "switch",
+        "default": false,
+        "help": "是否在首页 VPS 卡片中显示 IPv6 TCP Ping"
+      },
+      {
+        "type": "title",
         "name": "VPS 详情页资源显示"
       },
       {
@@ -135,6 +167,6 @@
       }
     ]
   },
-  "version": "1.4.22",
+  "version": "1.4.24",
   "license": "AGPL-3.0"
 }

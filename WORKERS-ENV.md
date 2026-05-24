@@ -36,11 +36,28 @@ DETAIL_RESOURCE_METRIC_STYLE=circle
 # 首页延迟指定线路，留空显示全部
 HOME_TCPING_INCLUDE=上海电信,福建电信,上海移动
 
+# 首页延迟显示开关，默认只显示 IPv4 TCP Ping
+HOME_SHOW_IPV4_PING=false
+HOME_SHOW_IPV4_TCPING=true
+HOME_SHOW_IPV6_PING=false
+HOME_SHOW_IPV6_TCPING=false
+
 # VPS 详情页延迟显示开关
 DETAIL_SHOW_IPV4_PING=true
 DETAIL_SHOW_IPV4_TCPING=true
 DETAIL_SHOW_IPV6_PING=true
 DETAIL_SHOW_IPV6_TCPING=true
+```
+
+## 首页延迟显示开关
+
+默认只开启 IPv4 TCP Ping。需要显示其它类型时，将对应变量改为 `true`。如果四个都设置为 `false`，首页 VPS 卡片里不会显示延迟模块。
+
+```txt
+HOME_SHOW_IPV4_PING=false
+HOME_SHOW_IPV4_TCPING=true
+HOME_SHOW_IPV6_PING=false
+HOME_SHOW_IPV6_TCPING=false
 ```
 
 ## 可选值说明

@@ -12,7 +12,7 @@ import {
   latencySegmentHeight,
   type LatencyFamily,
 } from '../utils/latency'
-import { prefString, splitPreferenceList } from '../utils/preferences'
+import { prefBool, prefString, splitPreferenceList } from '../utils/preferences'
 import type { LatencyType, SiteUserPreferences, TaskQueryResult } from '../types'
 
 const SEGMENTS = 22
@@ -103,29 +103,73 @@ function TcpingRow({ item }: { item: SeriesSummary }) {
 }
 
 function summarizeLatencyGroups(
-  _pingRows: TaskQueryResult[],
+  pingRows: TaskQueryResult[],
   tcpRows: TaskQueryResult[],
   prefs?: SiteUserPreferences,
 ): LatencyGroup[] {
   const includeTokens = splitPreferenceList(prefString(prefs, 'home_tcping_include', ''))
-  const rows = filterRowsByLatestSeries(
-    filterLatencyRowsByFamilyAndType(tcpRows, 'ipv4', 'tcp_ping'),
-    'tcp_ping',
-  )
-  const series = buildSeries(rows, 'tcp_ping', 'ipv4')
-    .filter(item => matchesInclude(item, includeTokens))
-
-  if (series.length === 0) return []
-  return [
+  const configs: Array<{
+    key: string
+    title: string
+    family: LatencyFamily
+    type: LatencyType
+    source: TaskQueryResult[]
+    enabled: boolean
+  }> = [
+    {
+      key: 'ipv4_ping',
+      title: 'IPv4 Ping',
+      family: 'ipv4',
+      type: 'ping',
+      source: pingRows,
+      enabled: prefBool(prefs, 'home_show_ipv4_ping', false),
+    },
     {
       key: 'ipv4_tcping',
       title: 'IPv4 TCPing',
       family: 'ipv4',
       type: 'tcp_ping',
-      rows,
-      series,
+      source: tcpRows,
+      enabled: prefBool(prefs, 'home_show_ipv4_tcping', true),
+    },
+    {
+      key: 'ipv6_ping',
+      title: 'IPv6 Ping',
+      family: 'ipv6',
+      type: 'ping',
+      source: pingRows,
+      enabled: prefBool(prefs, 'home_show_ipv6_ping', false),
+    },
+    {
+      key: 'ipv6_tcping',
+      title: 'IPv6 TCPing',
+      family: 'ipv6',
+      type: 'tcp_ping',
+      source: tcpRows,
+      enabled: prefBool(prefs, 'home_show_ipv6_tcping', false),
     },
   ]
+
+  return configs
+    .filter(config => config.enabled)
+    .map<LatencyGroup | null>(config => {
+      const rows = filterRowsByLatestSeries(
+        filterLatencyRowsByFamilyAndType(config.source, config.family, config.type),
+        config.type,
+      )
+      const series = buildSeries(rows, config.type, config.family)
+        .filter(item => matchesInclude(item, includeTokens))
+      if (series.length === 0) return null
+      return {
+        key: config.key,
+        title: config.title,
+        family: config.family,
+        type: config.type,
+        rows,
+        series,
+      }
+    })
+    .filter((group): group is LatencyGroup => group != null)
 }
 
 function buildSeries(rows: TaskQueryResult[], type: LatencyType, family: LatencyFamily): SeriesSummary[] {

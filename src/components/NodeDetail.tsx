@@ -552,13 +552,17 @@ function LatencyBlock({ title, rows, type, family, loading, error }: LatencyBloc
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
                 labelFormatter={t => new Date(Number(t)).toLocaleTimeString()}
-                formatter={(v: number) => ms(Number(v))}
+                formatter={(v: number, name: string) => [
+                  ms(Number(v)),
+                  latencyTargetDisplayLabel(String(name)) || String(name),
+                ]}
               />
               {visibleSeries.map(s => (
                 <Line
                   key={s.name}
                   type="monotone"
                   dataKey={s.name}
+                  name={latencyTargetDisplayLabel(s.name) || s.name}
                   stroke={s.color}
                   strokeWidth={1.5}
                   dot={false}
