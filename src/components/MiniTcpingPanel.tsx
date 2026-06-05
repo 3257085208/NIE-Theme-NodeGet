@@ -5,9 +5,11 @@ import {
   buildLatencyQualityRows,
   filterLatencyRowsByFamilyAndType,
   filterRowsByLatestSeries,
+  latencySeriesName,
   parseLatencyTarget,
   providerLabelFromCode,
   latencyTargetDisplayLabel,
+  normalizeTs,
   qualitySegmentColor,
   latencySegmentHeight,
   type LatencyFamily,
@@ -17,8 +19,8 @@ import type { LatencyType, SiteUserPreferences, TaskQueryResult } from '../types
 
 const SEGMENTS = 22
 const NAME_ORDER = ['电信', '联通', '移动']
-const MINI_WINDOW_MS = 22 * 60 * 1000
-const MINI_BUCKET_MS = 60 * 1000
+const MIN_MINI_BUCKET_MS = 60 * 1000
+const MAX_MINI_BUCKET_MS = 2 * 60 * 1000
 
 interface Props {
   pingData: TaskQueryResult[]
@@ -173,9 +175,11 @@ function summarizeLatencyGroups(
 }
 
 function buildSeries(rows: TaskQueryResult[], type: LatencyType, family: LatencyFamily): SeriesSummary[] {
+  const bucketMs = inferMiniBucketMs(rows, type)
+
   return buildLatencyQualityRows(rows, type, SEGMENTS, {
-    windowMs: MINI_WINDOW_MS,
-    bucketMs: MINI_BUCKET_MS,
+    windowMs: SEGMENTS * bucketMs,
+    bucketMs,
     buckets: SEGMENTS,
     includeCurrentBucket: false,
   }, family)
@@ -189,6 +193,35 @@ function buildSeries(rows: TaskQueryResult[], type: LatencyType, family: Latency
       lossRate: row.lossRate,
     }))
     .sort((a, b) => providerRank(a.name) - providerRank(b.name) || (a.avg ?? Infinity) - (b.avg ?? Infinity))
+}
+
+function inferMiniBucketMs(rows: TaskQueryResult[], type: LatencyType) {
+  const bySeries = new Map<string, number[]>()
+
+  for (const row of rows) {
+    const t = normalizeTs(row.timestamp)
+    if (!Number.isFinite(t) || t <= 0) continue
+    const name = latencySeriesName(row, type)
+    const list = bySeries.get(name)
+    if (list) list.push(t)
+    else bySeries.set(name, [t])
+  }
+
+  const deltas: number[] = []
+  for (const list of bySeries.values()) {
+    list.sort((a, b) => a - b)
+    for (let i = 1; i < list.length; i++) {
+      const delta = list[i] - list[i - 1]
+      if (delta >= MIN_MINI_BUCKET_MS && delta <= 10 * MIN_MINI_BUCKET_MS) deltas.push(delta)
+    }
+  }
+
+  if (!deltas.length) return MIN_MINI_BUCKET_MS
+
+  deltas.sort((a, b) => a - b)
+  const median = deltas[Math.floor(deltas.length / 2)]
+  const rounded = Math.round(median / MIN_MINI_BUCKET_MS) * MIN_MINI_BUCKET_MS
+  return Math.max(MIN_MINI_BUCKET_MS, Math.min(MAX_MINI_BUCKET_MS, rounded))
 }
 
 function matchesInclude(item: SeriesSummary, tokens: string[]) {
