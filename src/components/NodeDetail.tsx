@@ -26,6 +26,7 @@ import {
   buildLatencyQualityRows,
   filterLatencyRowsByFamilyAndType,
   inferLatencyBucketMs,
+  latencyWindowNowFromLatestSample,
   qualitySegmentColor,
   latencySegmentHeight,
   latencyTargetDisplayLabel,
@@ -506,15 +507,17 @@ function LatencyBlock({ title, rows, type, family, loading, error }: LatencyBloc
   const isMobile = useIsMobile()
   const { data, series } = useMemo(() => buildLatencyChart(rows, type, family), [rows, type, family])
   const qualityBucketMs = useMemo(() => inferLatencyBucketMs(rows, type), [rows, type])
+  const qualityNow = useMemo(() => latencyWindowNowFromLatestSample(rows, qualityBucketMs), [rows, qualityBucketMs])
   const qualityBucketCount = isMobile ? LATENCY_DETAIL_BUCKETS.mobile : LATENCY_DETAIL_BUCKETS.desktop
   const qualityRows = useMemo(
     () => buildLatencyQualityRows(rows, type, qualityBucketCount, {
       windowMs: qualityBucketCount * qualityBucketMs,
       bucketMs: qualityBucketMs,
       buckets: qualityBucketCount,
+      now: qualityNow,
       includeCurrentBucket: false,
     }, family),
-    [rows, type, family, qualityBucketCount, qualityBucketMs],
+    [rows, type, family, qualityBucketCount, qualityBucketMs, qualityNow],
   )
   const [hidden, setHidden] = useState<Set<string>>(() => new Set())
   const empty = series.length === 0

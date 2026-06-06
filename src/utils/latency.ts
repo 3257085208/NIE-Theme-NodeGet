@@ -497,6 +497,16 @@ export function inferLatencyBucketMs(
   return Math.max(minBucketMs, Math.min(maxBucketMs, rounded))
 }
 
+export function latencyWindowNowFromLatestSample(rows: TaskQueryResult[], bucketMs: number) {
+  let latest = 0
+  for (const row of rows) {
+    const t = normalizeTs(row.timestamp)
+    if (Number.isFinite(t) && t > latest) latest = t
+  }
+
+  return latest > 0 ? latest + bucketMs : Date.now()
+}
+
 function emptyPoint(t: number, names: string[]): ChartPoint {
   const pt: ChartPoint = { t }
   for (const n of names) pt[n] = null

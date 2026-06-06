@@ -6,6 +6,7 @@ import {
   filterLatencyRowsByFamilyAndType,
   filterRowsByLatestSeries,
   inferLatencyBucketMs,
+  latencyWindowNowFromLatestSample,
   parseLatencyTarget,
   providerLabelFromCode,
   latencyTargetDisplayLabel,
@@ -179,11 +180,13 @@ function buildSeries(rows: TaskQueryResult[], type: LatencyType, family: Latency
     maxBucketMs: MAX_MINI_BUCKET_MS,
     maxDeltaMs: 10 * MIN_MINI_BUCKET_MS,
   })
+  const now = latencyWindowNowFromLatestSample(rows, bucketMs)
 
   return buildLatencyQualityRows(rows, type, SEGMENTS, {
     windowMs: SEGMENTS * bucketMs,
     bucketMs,
     buckets: SEGMENTS,
+    now,
     includeCurrentBucket: false,
   }, family)
     .filter(row => row.values.some(v => v !== undefined))
