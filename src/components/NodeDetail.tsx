@@ -501,7 +501,6 @@ interface LatencyBlockProps {
 }
 
 const ms = (v: number) => `${v.toFixed(1)} ms`
-const LATENCY_DETAIL_WINDOW_MS = 60 * 60 * 1000
 const LATENCY_DETAIL_BUCKETS = { desktop: 60, mobile: 30 }
 
 function LatencyBlock({ title, rows, type, family, loading, error }: LatencyBlockProps) {
@@ -509,11 +508,7 @@ function LatencyBlock({ title, rows, type, family, loading, error }: LatencyBloc
   const { data, series } = useMemo(() => buildLatencyChart(rows, type, family), [rows, type, family])
   const qualityBucketMs = useMemo(() => inferLatencyBucketMs(rows, type), [rows, type])
   const qualityNow = useMemo(() => latencyWindowNowFromLatestSample(rows, qualityBucketMs), [rows, qualityBucketMs])
-  const maxBucketsInWindow = Math.max(1, Math.floor(LATENCY_DETAIL_WINDOW_MS / qualityBucketMs))
-  const qualityBucketCount = Math.min(
-    isMobile ? LATENCY_DETAIL_BUCKETS.mobile : LATENCY_DETAIL_BUCKETS.desktop,
-    maxBucketsInWindow,
-  )
+  const qualityBucketCount = isMobile ? LATENCY_DETAIL_BUCKETS.mobile : LATENCY_DETAIL_BUCKETS.desktop
   const qualityRows = useMemo(
     () => buildLatencyQualityRows(rows, type, qualityBucketCount, {
       windowMs: qualityBucketCount * qualityBucketMs,

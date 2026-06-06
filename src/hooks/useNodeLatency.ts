@@ -5,7 +5,7 @@ import type { RpcClient } from '../api/client'
 import type { BackendPool } from '../api/pool'
 import type { LatencyType, TaskQueryResult } from '../types'
 
-const WINDOW_MS = 60 * 60 * 1000
+const WINDOW_MS = 5 * 60 * 60 * 1000
 const REFRESH_MS = 120_000
 const QUERY_TIMEOUT_MS = 20_000
 const CACHE_LIMIT = 20000
@@ -102,14 +102,14 @@ export function useNodeLatency(
   source: string | null,
   uuid: string | null,
 ): LatencyQueryState {
-  const [pingData, setPingData] = useState<TaskQueryResult[]>(() => getLatencyCache(source, uuid, 'ping'))
-  const [tcpData, setTcpData] = useState<TaskQueryResult[]>(() => getLatencyCache(source, uuid, 'tcp_ping'))
+  const [pingData, setPingData] = useState<TaskQueryResult[]>([])
+  const [tcpData, setTcpData] = useState<TaskQueryResult[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    setPingData(getLatencyCache(source, uuid, 'ping'))
-    setTcpData(getLatencyCache(source, uuid, 'tcp_ping'))
+    setPingData([])
+    setTcpData([])
     setError(null)
 
     if (!pool || !source || !uuid) return
@@ -130,11 +130,11 @@ export function useNodeLatency(
 
       if (ping.status === 'fulfilled') {
         setLatencyCache(source, uuid, 'ping', ping.value)
-        setPingData(getLatencyCache(source, uuid, 'ping'))
+        setPingData(ping.value)
       }
       if (tcp.status === 'fulfilled') {
         setLatencyCache(source, uuid, 'tcp_ping', tcp.value)
-        setTcpData(getLatencyCache(source, uuid, 'tcp_ping'))
+        setTcpData(tcp.value)
       }
 
       const messages = [ping, tcp]
@@ -145,7 +145,7 @@ export function useNodeLatency(
       setLoading(false)
     }
 
-    fetchOnce()
+    fetchOnce(true)
 
     const refetchAfterWake = () => {
       if (document.visibilityState !== 'visible') return
