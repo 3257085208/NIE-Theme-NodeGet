@@ -439,6 +439,12 @@ export interface LatencyBucketOptions {
   fillEmptyWithNull?: boolean
 }
 
+export interface InferLatencyBucketOptions {
+  minBucketMs?: number
+  maxBucketMs?: number
+  maxDeltaMs?: number
+}
+
 interface BucketAgg {
   success: number[]
   failed: number
@@ -452,6 +458,43 @@ function alignedWindow({ windowMs, bucketMs, buckets, now = Date.now(), includeC
   const windowEnd = includeCurrentBucket ? lastCompletedEnd + safeBucketMs : lastCompletedEnd
   const windowStart = windowEnd - safeBuckets * safeBucketMs
   return { bucketMs: safeBucketMs, buckets: safeBuckets, windowStart, windowEnd }
+}
+
+export function inferLatencyBucketMs(
+  rows: TaskQueryResult[],
+  type: LatencyType,
+  {
+    minBucketMs = 60_000,
+    maxBucketMs = 5 * 60_000,
+    maxDeltaMs = 10 * 60_000,
+  }: InferLatencyBucketOptions = {},
+) {
+  const bySeries = new Map<string, number[]>()
+
+  for (const row of rows) {
+    const t = normalizeTs(row.timestamp)
+    if (!Number.isFinite(t) || t <= 0) continue
+    const name = latencySeriesName(row, type)
+    const list = bySeries.get(name)
+    if (list) list.push(t)
+    else bySeries.set(name, [t])
+  }
+
+  const deltas: number[] = []
+  for (const list of bySeries.values()) {
+    list.sort((a, b) => a - b)
+    for (let i = 1; i < list.length; i++) {
+      const delta = list[i] - list[i - 1]
+      if (delta >= minBucketMs && delta <= maxDeltaMs) deltas.push(delta)
+    }
+  }
+
+  if (!deltas.length) return minBucketMs
+
+  deltas.sort((a, b) => a - b)
+  const median = deltas[Math.floor(deltas.length / 2)]
+  const rounded = Math.round(median / minBucketMs) * minBucketMs
+  return Math.max(minBucketMs, Math.min(maxBucketMs, rounded))
 }
 
 function emptyPoint(t: number, names: string[]): ChartPoint {
